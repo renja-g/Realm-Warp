@@ -1,0 +1,38 @@
+version: '3'
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongodb
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/realm_warm
+    networks:
+      - realm-warm-network
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "5000:5000"
+    networks:
+      - realm-warm-network
+
+  mongodb:
+    image: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: realm_warm
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - realm-warm-network
+
+networks:
+  realm-warm-network:
+
+volumes:
+  mongodb-data:
