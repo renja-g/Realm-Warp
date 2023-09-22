@@ -1,1 +1,3 @@
-print("Hello from tracker.py")
+import motor.motor_asyncio
+
+client = motor.motor_asyncio.AsyncIOMotorClient()
