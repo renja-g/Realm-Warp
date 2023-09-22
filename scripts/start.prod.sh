@@ -12,12 +12,7 @@ if ! command -v docker-compose &> /dev/null; then
     exit 1
 fi
 
-# Navigate to the directory containing your docker-compose.yml file
-cd /path/to/your/docker-compose-directory
-
 # Start the containers using docker-compose
 docker-compose up -d
 
-# Optionally, you can add more commands or instructions here
-# For example, you might want to display a message after starting the containers
 echo "Docker containers started successfully!"

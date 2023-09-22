@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Install required global dependencies (if not already installed)
-npm install -g docker-compose
-
 # Start MongoDB Docker container
 docker-compose up -d mongodb
 
