@@ -1,20 +1,20 @@
-# Use a Node.js LTS image as a parent image
-FROM node:lts
+FROM node:18-alpine AS build
 
-# Set the working directory to /app
 WORKDIR /app
-
-# Copy the current directory contents into the container at /app
+COPY package*.json ./
+RUN rm -rf node_modules
+RUN rm -rf build
 COPY . .
-
-# Install Node.js dependencies
 RUN npm install
-
-# Build the Svelte application
 RUN npm run build
 
-# Expose port 5000 to the world outside this container
+FROM node:18-alpine AS production
+
+WORKDIR /app
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/build ./build
+RUN npm install --production
+
 EXPOSE 3000
 
-# Start the Svelte application
-CMD ["npm", "run", "preview"]
+CMD [ "node", "build/index.js" ]
