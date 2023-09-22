@@ -14,7 +14,7 @@ RUN npm install
 RUN npm run build
 
 # Expose port 5000 to the world outside this container
-EXPOSE 5000
+EXPOSE 3000
 
 # Start the Svelte application
-CMD ["npm", "start"]
+CMD ["npm", "run", "preview"]
