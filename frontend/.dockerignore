@@ -5,3 +5,4 @@ build
 .prettier*
 README.md
 Dockerfile
+.git*
