@@ -1,10 +1,22 @@
 version: '3'
 services:
-  backend:
+  backend-api:
     build:
       context: ./backend
+      dockerfile: ./api/Dockerfile
     ports:
       - "8000:8000"
+    depends_on:
+      - mongodb
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/realm_warm
+    networks:
+      - realm-warm-network
+
+  backend-worker:
+    build:
+      context: ./backend
+      dockerfile: ./worker/Dockerfile
     depends_on:
       - mongodb
     environment:
