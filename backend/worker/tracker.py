@@ -115,8 +115,6 @@ async def get_summoner_leagues(summoner_id, platform):
 # Enrich match data with league data
 async def enrich_match_data(match_data):
     queue_id = match_data['info']['queueId']
-    if queue_id not in queueId2queueType:
-        return match_data
     for participant in match_data['info']['participants']:
         summoner_id = participant['summonerId']
         summoner_puuid = participant['puuid']
@@ -124,6 +122,10 @@ async def enrich_match_data(match_data):
         # if the summoner is in the db
         summoner = await summoners_c.find_one({'puuid': summoner_puuid})
         if summoner:
+            if queue_id not in queueId2queueType:
+                summoner['lastMatchId'] = match_data['metadata']['matchId']
+                await summoners_c.update_one({'puuid': summoner_puuid}, {'$set': summoner})
+                return match_data
             # get summoner leagues
             league_entries = await get_summoner_leagues(summoner_id, summoner['platform'])
             for league in league_entries:
