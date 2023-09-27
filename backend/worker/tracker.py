@@ -10,7 +10,7 @@ import asyncio
 # Set up logging
 logging.basicConfig(filename=f'{os.path.dirname(__file__)}/logs/tracker.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-RIOT_API_KEY = 'RGAPI-f6f378e4-2396-4dfd-a07c-b6f6e5c686db'
+RIOT_API_KEY = 'RGAPI-ae90db68-b6b2-4f00-9817-33414cc2869c'
 
 client = motor_asyncio.AsyncIOMotorClient('localhost', 27017)
 db = client['realm-warp']
@@ -115,6 +115,8 @@ async def get_summoner_leagues(summoner_id, platform):
 # Enrich match data with league data
 async def enrich_match_data(match_data):
     queue_id = match_data['info']['queueId']
+    if queue_id not in queueId2queueType:
+        return match_data
     for participant in match_data['info']['participants']:
         summoner_id = participant['summonerId']
         summoner_puuid = participant['puuid']
