@@ -1,26 +1,33 @@
 import os
 import logging
-from motor import motor_asyncio
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-import json
 import requests
 import asyncio
+from motor import motor_asyncio
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from dotenv import load_dotenv
 
+# Logger config
+logging.basicConfig(
+    filename=os.path.join(os.path.dirname(__file__), 'logs', 'tracker.log'),
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
-# Set up logging
-logging.basicConfig(filename=f'{os.path.dirname(__file__)}/logs/tracker.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Load env variables
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+RIOT_API_KEY = os.getenv('RIOT_API_KEY')
 
-RIOT_API_KEY = 'RGAPI-ae90db68-b6b2-4f00-9817-33414cc2869c'
-
+# Connect to db
 client = motor_asyncio.AsyncIOMotorClient('localhost', 27017)
 db = client['realm-warp']
 summoners_c = db['summoners']
 matches_c = db['matches']
 timelines_c = db['timelines']
 
+# Scheduler config
 scheduler = AsyncIOScheduler()
 
-
+# Constants
 platform2regions = {
     'br1': 'americas',
     'eun1': 'europe',
@@ -40,21 +47,22 @@ platform2regions = {
     'vn2': 'sea',
 }
 
-queueType2queueId = {
-    'RANKED_FLEX_SR': 440,
-    'RANKED_SOLO_5x5': 420,
-}
-
 queueId2queueType = {
     440: 'RANKED_FLEX_SR',
     420: 'RANKED_SOLO_5x5',
 }
 
+
+# Utility function to make API requests
+async def make_api_request(url):
+    response = await asyncio.to_thread(requests.get, url)
+    response.raise_for_status()
+    return response.json()
+
+
 # Get all summoners from db
 async def get_summoners():
-    summoners = []
-    async for summoner in summoners_c.find():
-        summoners.append(summoner)
+    summoners = await summoners_c.find().to_list(None)
     return summoners
 
 
@@ -63,53 +71,40 @@ async def check_for_new_match(summoner):
     summoner_puuid = summoner['puuid']
     region = platform2regions[summoner['platform']]
     last_match_id = summoner['lastMatchId']
-    
-    # Get the latest match ID
+
     url = f'https://{region}.api.riotgames.com/lol/match/v5/matches/by-puuid/{summoner_puuid}/ids?start=0&count=1&api_key={RIOT_API_KEY}'
-    response = requests.get(url)
-    if response.status_code == 200:
-        match_id = response.json()[0]
-        
-        # If the match ID is different, return it
+    try:
+        match_ids = await make_api_request(url)
+        match_id = match_ids[0]
         if match_id != last_match_id:
             logging.info(f'New match found for summoner {summoner["name"]} ({summoner["id"]})')
             return match_id
         else:
             logging.info(f'No new match found for summoner {summoner["name"]} ({summoner["id"]})')
-    else:
-        logging.error(f'Error getting match history for summoner {summoner["name"]} ({summoner["id"]}): {response.json()}')
-
-    # Otherwise, return None
-    return None
+            return None
+    except Exception as e:
+        logging.error(f'Error getting match history for summoner {summoner["name"]} ({summoner["id"]}): {str(e)}')
+        return None
 
 
 # Get match data
 async def get_match_data(match_id, platform):
     region = platform2regions[platform]
     url = f'https://{region}.api.riotgames.com/lol/match/v5/matches/{match_id}?api_key={RIOT_API_KEY}'
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.json()
-    return None
+    return await make_api_request(url)
 
 
 # Get timeline data
 async def get_timeline_data(match_id, platform):
     region = platform2regions[platform]
     url = f'https://{region}.api.riotgames.com/lol/match/v5/matches/{match_id}/timeline?api_key={RIOT_API_KEY}'
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.json()
-    return None
+    return await make_api_request(url)
 
 
 # Get summoner leagues
 async def get_summoner_leagues(summoner_id, platform):
     url = f'https://{platform}.api.riotgames.com/lol/league/v4/entries/by-summoner/{summoner_id}?api_key={RIOT_API_KEY}'
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.json()
-    return None
+    return await make_api_request(url)
 
 
 # Enrich match data with league data
@@ -129,7 +124,7 @@ async def enrich_match_data(match_data):
             # get summoner leagues
             league_entries = await get_summoner_leagues(summoner_id, summoner['platform'])
             for league in league_entries:
-                if league['queueType'] == queueId2queueType[queue_id]:            
+                if league['queueType'] == queueId2queueType[queue_id]:
                     participant['league'] = {
                         'tier': league['tier'],
                         'rank': league['rank'],
@@ -173,4 +168,8 @@ async def main():
         logging.error(f'Error in main function: {e}')
 
 
-asyncio.run(main())
+
+if __name__ == '__main__':
+    scheduler.add_job(main, 'cron', minute='*/2')
+    scheduler.start()
+    asyncio.get_event_loop().run_forever()
