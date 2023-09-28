@@ -5,6 +5,8 @@ import asyncio
 from motor import motor_asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
+from utils import routing
+
 
 # Logger config
 logging.basicConfig(
@@ -27,31 +29,6 @@ timelines_c = db['timelines']
 # Scheduler config
 scheduler = AsyncIOScheduler()
 
-# Constants
-platform2regions = {
-    'br1': 'americas',
-    'eun1': 'europe',
-    'euw1': 'europe',
-    'jp1': 'asia',
-    'kr': 'asia',
-    'la1': 'americas',
-    'la2': 'americas',
-    'na1': 'americas',
-    'oc1': 'sea',
-    'tr1': 'europe',
-    'ru': 'europe',
-    'ph2': 'sea',
-    'sg2': 'sea',
-    'th2': 'sea',
-    'tw2': 'sea',
-    'vn2': 'sea',
-}
-
-queueId2queueType = {
-    440: 'RANKED_FLEX_SR',
-    420: 'RANKED_SOLO_5x5',
-}
-
 
 # Utility function to make API requests
 async def make_api_request(url):
@@ -69,7 +46,7 @@ async def get_summoners():
 # Check for new match
 async def check_for_new_match(summoner):
     summoner_puuid = summoner['puuid']
-    region = platform2regions[summoner['platform']]
+    region = routing.platform_to_region(summoner['platform'])
     last_match_id = summoner['lastMatchId']
 
     url = f'https://{region}.api.riotgames.com/lol/match/v5/matches/by-puuid/{summoner_puuid}/ids?start=0&count=1&api_key={RIOT_API_KEY}'
@@ -89,14 +66,14 @@ async def check_for_new_match(summoner):
 
 # Get match data
 async def get_match_data(match_id, platform):
-    region = platform2regions[platform]
+    region = routing.platform_to_region(platform)
     url = f'https://{region}.api.riotgames.com/lol/match/v5/matches/{match_id}?api_key={RIOT_API_KEY}'
     return await make_api_request(url)
 
 
 # Get timeline data
 async def get_timeline_data(match_id, platform):
-    region = platform2regions[platform]
+    region = routing.platform_to_region(platform)
     url = f'https://{region}.api.riotgames.com/lol/match/v5/matches/{match_id}/timeline?api_key={RIOT_API_KEY}'
     return await make_api_request(url)
 
@@ -117,14 +94,14 @@ async def enrich_match_data(match_data):
         # if the summoner is in the db
         summoner = await summoners_c.find_one({'puuid': summoner_puuid})
         if summoner:
-            if queue_id not in queueId2queueType:
+            if queue_id not in routing.queueId2queueType:
                 summoner['lastMatchId'] = match_data['metadata']['matchId']
                 await summoners_c.update_one({'puuid': summoner_puuid}, {'$set': summoner})
                 return match_data
             # get summoner leagues
             league_entries = await get_summoner_leagues(summoner_id, summoner['platform'])
             for league in league_entries:
-                if league['queueType'] == queueId2queueType[queue_id]:
+                if league['queueType'] == routing.queueId_to_queueType(queue_id):
                     participant['league'] = {
                         'tier': league['tier'],
                         'rank': league['rank'],
@@ -170,6 +147,6 @@ async def main():
 
 
 if __name__ == '__main__':
-    scheduler.add_job(main, 'cron', minute='*/2')
+    scheduler.add_job(main, 'cron', minute='*/1')
     scheduler.start()
     asyncio.get_event_loop().run_forever()
