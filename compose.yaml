@@ -8,19 +8,15 @@ services:
       - "8000:8000"
     depends_on:
       - mongodb
-    environment:
-      MONGO_URI: mongodb://mongodb:27017/realm_warm
     networks:
       - realm-warm-network
 
-  backend-worker:
+  backend-services-tracker:
     build:
       context: ./backend
-      dockerfile: ./worker/Dockerfile
+      dockerfile: ./services/tracker/Dockerfile
     depends_on:
       - mongodb
-    environment:
-      MONGO_URI: mongodb://mongodb:27017/realm_warm
     networks:
       - realm-warm-network
 

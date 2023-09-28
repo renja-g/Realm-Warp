@@ -20,7 +20,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 RIOT_API_KEY = os.getenv('RIOT_API_KEY')
 
 # Connect to db
-client = motor_asyncio.AsyncIOMotorClient('localhost', 27017)
+client = motor_asyncio.AsyncIOMotorClient('mongodb', 27017)
 db = client['realm-warp']
 summoners_c = db['summoners']
 matches_c = db['matches']
