@@ -1,16 +1,19 @@
-# Stage 1: Build image
-FROM python:3.11-alpine as builder
+# Use an official Python image as the base image
+FROM python:3.11-alpine as base
 
+# Set the working directory within the container
 WORKDIR /app
-COPY /worker .
-RUN pip install --no-cache-dir -r requirements.txt
 
-# Stage 2: Final image
-FROM python:3.11-alpine
+# Copy only the requirements file to leverage Docker cache
+COPY ./services/tracker/requirements.txt /app/tracker/requirements.txt
 
-WORKDIR /app
-COPY --from=builder /app /app
-EXPOSE 8000
-ENV MONGO_URI="mongodb://mongodb:27017/realm_warm"
+# Install dependencies
+RUN pip install --no-cache-dir -r /app/tracker/requirements.txt
 
-CMD ["python", "tracker.py"]
+# Copy the application code and environment file
+COPY ./services/tracker /app/tracker
+COPY ./utils /app/utils
+COPY ./.env /app/
+
+# Define the default command to run the application
+CMD ["python", "-m", "tracker.tracker"]
