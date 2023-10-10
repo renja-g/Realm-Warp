@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-from v1.endpoints import users
+from v1.endpoints import summoner
 
 router = APIRouter()
 
-router.include_router(users.router, prefix="/users", tags=["Users"])
+router.include_router(summoner.router, prefix="/summoner", tags=["Summoner"])
