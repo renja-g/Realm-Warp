@@ -1,44 +1,43 @@
 import os
 import logging
 import asyncio
+from typing import List
+from time import sleep
+
 from motor import motor_asyncio
 from dotenv import load_dotenv
 
-from typing import List
-
 from pyot.core.queue import Queue
 from pyot.models import lol
-from pyot.utils.lol.routing import  platform_to_region
+from pyot.utils.lol.routing import platform_to_region
 
+# Constants
+QUEUE_ID_TO_QUEUE_TYPE = {
+    440: 'RANKED_FLEX_SR',
+    420: 'RANKED_SOLO_5x5',
+    # Add more queue types here
+}
 
-# Logger config
+# Configure logging
 logging.basicConfig(
     filename=os.path.join(os.path.dirname(__file__), '..', 'logs', 'tracker.log'),
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-# Load env variables
+# Load environment variables
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '..', '..', '.env'))
 RIOT_API_KEY = os.getenv('RIOT_API_KEY')
 
-# Connect to db
+# Database connection
 client = motor_asyncio.AsyncIOMotorClient('localhost', 27017)
 db = client['realm-warp']
 summoners_c = db['summoners']
 matches_c = db['matches']
 timelines_c = db['timelines']
 
+# Helper functions
 
-# Static data
-QUEUE_ID_TO_QUEUE_TYPE = {
-    440: 'RANKED_FLEX_SR',
-    420: 'RANKED_SOLO_5x5',
-    # TODO: Add more queue types
-}
-
-
-# Get all summoners from db
 async def get_summoners():
     summoners = await summoners_c.find().to_list(None)
     return summoners
@@ -120,7 +119,8 @@ async def enrich_match_data(match_data: lol.Match):
 
 # Save match data to db
 async def save_match_data(match_data):
-    await matches_c.insert_one(match_data.to_dict())
+    match_data = match_data.dict()
+    await matches_c.insert_one(match_data)
 
 
 # Save timeline data to db
@@ -128,35 +128,26 @@ async def save_timeline_data(timeline_data):
     await timelines_c.insert_one(timeline_data)
 
 
-# old main function
-async def main_old():
-    try:
-        summoners = await get_summoners()
-        for summoner in summoners:
-            match_id = await check_for_new_match(summoner)
-            if match_id:
-                logging.info(f'Processing match {match_id} for summoner {summoner["name"]} ({summoner["id"]})')
-                match_data = await get_match_data(match_id, summoner['platform'])
-                match_data = await enrich_match_data(match_data)
-                await save_match_data(match_data)
-                timeline_data = await get_timeline_data(match_id, summoner['platform'])
-                await save_timeline_data(timeline_data)
-                logging.info(f'Match {match_id} for summoner {summoner["name"]} ({summoner["id"]}) processed successfully')
-    except Exception as e:
-        logging.error(f'Error in main function: {e}')
-
-
 # Main function
 async def tracker():
     while True:
         summoners = await get_summoners()
+        tasks = []
+        
         for summoner in summoners:
             match_id = await check_for_new_match(summoner)
             if match_id:
                 logging.info(f'Processing match {match_id} for summoner {summoner["name"]} ({summoner["id"]})')
-                match_data = await get_match_data(match_id, summoner['platform'])
-                match_data = await enrich_match_data(match_data)
-                await save_match_data(match_data)
-                timeline_data = await get_timeline_data(match_id, summoner['platform'])
-                await save_timeline_data(timeline_data)
+                match_task = get_match_data(match_id, summoner['platform'])
+                match_data = await enrich_match_data(await match_task)
+                tasks.append(save_match_data(match_data))
+                tasks.append(save_timeline_data(await get_timeline_data(match_id, summoner['platform'])))
                 logging.info(f'Match {match_id} for summoner {summoner["name"]} ({summoner["id"]}) processed successfully')
+        
+        # Run all tasks concurrently
+        await asyncio.gather(*tasks)
+        sleep(20)
+
+
+if __name__ == "__main__":
+    asyncio.run(tracker())
