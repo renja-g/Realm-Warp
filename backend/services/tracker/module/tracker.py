@@ -105,24 +105,41 @@ async def enrich_match_data(match_data: lol.Match):
                 summoner['lastMatchId'] = match_data.metadata.match_id
                 await summoners_c.update_one({'puuid': summoner_puuid}, {'$set': summoner})
                 return match_data
+            
             # get summoner leagues
             league_entries = await get_summoner_leagues(summoner_id, summoner['platform'])
-            for league in league_entries:
-                if league.queue == QUEUE_ID_TO_QUEUE_TYPE[queue_id]:
-                    participant.league = {
-                        'tier': league.tier,
-                        'rank': league.rank,
-                        'league_points': league.league_points
-                    }
+            if league_entries: # he is ranked
+                for league in league_entries:
+                    if league.queue == QUEUE_ID_TO_QUEUE_TYPE[queue_id]:
+                        participant.league = {
+                            'tier': league.tier,
+                            'rank': league.rank,
+                            'league_points': league.league_points
+                        }
 
-                    # update summoner leagues
-                    league = league.dict()
-                    league.pop('summonerId')
-                    league.pop('summonerName')
-                    summoner['league_entries'][str(queue_id)] = league
-                    summoner['lastMatchId'] = match_data.metadata.match_id
-                    await summoners_c.update_one({'puuid': summoner_puuid}, {'$set': summoner})
+                        # update summoner leagues
+                        league = league.dict()
+                        league.pop('summonerId')
+                        league.pop('summonerName')
+                        summoner['league_entries'][str(queue_id)] = league
+                        summoner['lastMatchId'] = match_data.metadata.match_id
+                        await summoners_c.update_one({'puuid': summoner_puuid}, {'$set': summoner})
                     break
+            else: # he is unranked (one of the first 10 games)
+                participant.league = {
+                    'tier': None,
+                    'rank': None,
+                    'league_points': None
+                }
+
+                # update summoner leagues
+                summoner['league_entries'][str(queue_id)] = {
+                    'tier': None,
+                    'rank': None,
+                    'league_points': None
+                }
+                summoner['lastMatchId'] = match_data.metadata.match_id
+                await summoners_c.update_one({'puuid': summoner_puuid}, {'$set': summoner})
     return match_data
 
 
