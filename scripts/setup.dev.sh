@@ -4,14 +4,22 @@
 docker-compose up -d mongodb
 
 # Install frontend dependencies
-cd frontend
+cd frontend || exit
 npm install
 cd ..
 
-# Install backend Python dependencies in a virtual environment
-cd backend
+# Install backend API dependencies
+cd backend/api || exit
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 deactivate
-cd ..
+cd ../..
+
+# Install backend Tracker service dependencies
+cd backend/services/tracker || exit
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+deactivate
+cd ../../..
