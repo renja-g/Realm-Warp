@@ -121,7 +121,7 @@ async def enrich_match_data(match_data: lol.Match):
                         league = league.dict()
                         league.pop('summonerId')
                         league.pop('summonerName')
-                        summoner['league_entries'][str(queue_id)] = league
+                        summoner['leagueEntries'][str(queue_id)] = league
                         summoner['lastMatchId'] = match_data.metadata.match_id
                         await summoners_c.update_one({'puuid': summoner_puuid}, {'$set': summoner})
                     break
@@ -133,7 +133,7 @@ async def enrich_match_data(match_data: lol.Match):
                 }
 
                 # update summoner leagues
-                summoner['league_entries'][str(queue_id)] = {
+                summoner['leagueEntries'][str(queue_id)] = {
                     'tier': None,
                     'rank': None,
                     'league_points': None
