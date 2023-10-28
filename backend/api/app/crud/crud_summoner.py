@@ -2,6 +2,7 @@ from app.schemas.summoner import SummonerCreate, Summoner
 from app.models.summoner import Summoner
 from app.core.config import settings
 import requests
+from typing import Optional
 
 class SummonerCRUD:
     @staticmethod
@@ -63,10 +64,15 @@ class SummonerCRUD:
         return summoner
     
     @staticmethod
-    async def get_all_summoners() -> list[Summoner]:
+    async def get_multi(skip: int = 0, limit: int = 100) -> list[Summoner]:
         """
         Returns a list of all summoners in the database.
         """
-        summoners = await Summoner.find_all().to_list()
+        summoners = await Summoner.find_many(skip=skip, limit=limit).to_list()
         return summoners
     
+    @staticmethod
+    async def get(puuid: str) -> Optional[Summoner]:
+        """Retuns a summoner with the given puuid."""
+        summoner = await Summoner.find_one(Summoner.puuid == puuid)
+        return summoner
