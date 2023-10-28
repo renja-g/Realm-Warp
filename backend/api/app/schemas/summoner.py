@@ -90,7 +90,6 @@ class SummonerUpdate(SummonerBase):
 
 # Properties shared by models stored in DB
 class SummonerInDBBase(SummonerBase):
-    mongo_id: Optional[str] = Field(None, alias="_id")
     id: str = Field(...)
     puuid: str = Field(...)
     name: str = Field(...)
