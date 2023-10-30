@@ -90,7 +90,7 @@ class SummonerUpdate(SummonerBase):
 
 # Properties shared by models stored in DB
 class SummonerInDBBase(SummonerBase):
-    id: str = Field(...)
+    summonerId: str = Field(...)
     puuid: str = Field(...)
     name: str = Field(...)
     profileIconId: int = Field(...)

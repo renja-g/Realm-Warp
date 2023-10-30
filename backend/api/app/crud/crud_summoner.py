@@ -51,7 +51,7 @@ class SummonerCRUD:
                 }
 
         summoner = Summoner(
-            id=summoner_data["id"],
+            summonerId=summoner_data["id"],
             puuid=summoner_data["puuid"],
             name=summoner_data["name"],
             profileIconId=summoner_data["profileIconId"],
@@ -62,7 +62,8 @@ class SummonerCRUD:
         )
         await summoner.insert()
         return summoner
-    
+
+
     @staticmethod
     async def get_multi(skip: int = 0, limit: int = 100) -> list[Summoner]:
         """
@@ -70,9 +71,19 @@ class SummonerCRUD:
         """
         summoners = await Summoner.find_many(skip=skip, limit=limit).to_list()
         return summoners
-    
+
+
     @staticmethod
     async def get(puuid: str) -> Optional[Summoner]:
         """Retuns a summoner with the given puuid."""
         summoner = await Summoner.find_one(Summoner.puuid == puuid)
         return summoner
+
+
+    @staticmethod
+    async def delete(puuid: str) -> None:
+        """Deletes a summoner from the database."""
+        summoner = await SummonerCRUD.get(puuid=puuid)
+        if summoner:
+            await summoner.delete()
+        return None

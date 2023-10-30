@@ -1,7 +1,7 @@
-from typing import Any, List, Optional
+from typing import List
 
 from fastapi import APIRouter, HTTPException, status
-import pymongo
+from pymongo.errors import DuplicateKeyError
 
 from app.schemas.summoner import SummonerCreate, Summoner
 from app.crud.crud_summoner import SummonerCRUD
@@ -19,7 +19,7 @@ async def get_all_summoners(
 
 @router.get("/{summoner_puuid}", summary="Returns a summoner with the given puuid.", response_model=Summoner)
 async def get_by_puuid(summoner_puuid: str):
-    summoner = await SummonerCRUD.by_puuid(puuid=summoner_puuid)
+    summoner = await SummonerCRUD.get(puuid=summoner_puuid)
     if not summoner:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -28,13 +28,24 @@ async def get_by_puuid(summoner_puuid: str):
     return summoner
 
 
-
 @router.post("/", summary="Adds a new summoner to the database.", response_model=Summoner)
 async def add_summoner(data: SummonerCreate):
     try:
         return await SummonerCRUD.add_summoner(data)
-    except pymongo.errors.DuplicateKeyError:
+    except DuplicateKeyError:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Summoner already exists in the database."
         )
+
+
+@router.delete("/{summoner_puuid}", summary="Deletes a summoner from the database.")
+async def delete_summoner(summoner_puuid: str):
+    summoner = await SummonerCRUD.get(puuid=summoner_puuid)
+    if not summoner:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Summoner not found."
+        )
+    await SummonerCRUD.delete(puuid=summoner_puuid)
+    return {"message": "Summoner deleted."}

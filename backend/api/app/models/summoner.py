@@ -1,10 +1,12 @@
 from typing import Optional
 from datetime import datetime
 from uuid import UUID, uuid4
-from beanie import Document, Indexed, Link, before_event, Replace, Insert
+from beanie import Document, Indexed, Link, before_event, Replace, Insert 
+from beanie.odm.documents import json_schema_extra
 from enum import Enum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 import pymongo
+from bson import ObjectId
 
 
 
@@ -58,12 +60,15 @@ class LeagueEntry(BaseModel):
     freshBlood: bool
     hotStreak: bool
 
+class ObjectIdField(BaseModel):
+    oid: ObjectId
 
-
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class Summoner(Document):
-    id: str = Field(...)
+    summonerId: str = Field(...)
     puuid: str = Field(...)
     name: str = Field(...)
     profileIconId: int = Field(...)
