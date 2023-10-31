@@ -162,13 +162,13 @@ async def tracker():
             try:
                 match_id = await check_for_new_match(summoner)
                 if match_id:
-                    logging.info(f'Processing match {match_id} for summoner {summoner["name"]} ({summoner["id"]})')
+                    logging.info(f'Processing match {match_id} for summoner {summoner["name"]} ({summoner["puuid"]})')
                     match_data = await get_match_data(match_id, summoner['platform'])
                     match_data = await enrich_match_data(match_data)
                     await save_match_data(match_data)
                     timeline_data = await get_timeline_data(match_id, summoner['platform'])
                     await save_timeline_data(timeline_data)
-                    logging.info(f'Match {match_id} for summoner {summoner["name"]} ({summoner["id"]}) processed successfully')
+                    logging.info(f'Match {match_id} for summoner {summoner["name"]} ({summoner["puuid"]}) processed successfully')
             except NotFound as e:
                 logging.error(f'Summoner not found: {e}')
             except Exception as e:
