@@ -48,8 +48,8 @@ async def update_summoner(db_summoner: dict, summoner: lol.Summoner) -> None:
     summoner_profile_icon_id = summoner.profile_icon_id
     summoner_level = summoner.level
 
-    if db_summoner['id'] != summoner.id:
-        db_summoner['id'] = summoner.id
+    if db_summoner['summonerId'] != summoner.id:
+        db_summoner['summonerId'] = summoner.id
     if db_summoner['name'] != summoner.name:
         db_summoner['name'] = summoner.name
     if db_summoner['profileIconId'] != summoner.profile_icon_id:
