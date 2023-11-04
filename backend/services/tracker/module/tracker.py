@@ -26,10 +26,14 @@ RIOT_API_KEY = os.getenv('RIOT_API_KEY')
 if RIOT_API_KEY is None:
     raise ValueError("RIOT_API_KEY is not set in the environment")
 
+MONGODB_NAME = os.getenv('MONGODB_NAME')
+if MONGODB_NAME is None:
+    raise ValueError("MONGODB_NAME is not set in the environment")
+
 
 # Database
 client = motor_asyncio.AsyncIOMotorClient('localhost', 27017)
-db = client['realm-warp']
+db = client[MONGODB_NAME]
 summoners_c = db['summoners']
 matches_c = db['matches']
 timelines_c = db['timelines']
@@ -178,10 +182,12 @@ async def tracker():
                     else:
                         await save_match_data(match_data)
 
-
                     if match_id not in await timelines_c.distinct('metadata.matchId'):
                         timeline_data = await get_timeline_data(match_id, summoner['platform'])
                         await save_timeline_data(timeline_data)
+
+                    # update summoner's last match id
+                    await summoners_c.update_one({'puuid': summoner['puuid']}, {'$set': {'lastMatchId': match_id}})
             except NotFound as e:
                 logging.error(f'Summoner not found: {e}')
             except Exception as e:

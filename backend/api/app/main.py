@@ -16,7 +16,7 @@ async def load_app_resources():
     db_client = AsyncIOMotorClient(settings.MONGODB_URI)
     
     await init_beanie(
-        database=db_client[settings.DB_NAME],
+        database=db_client[settings.MONGODB_NAME],
         document_models=[
             Summoner
         ]
