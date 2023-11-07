@@ -39,6 +39,27 @@ async def add_summoner(data: SummonerCreate):
         )
 
 
+# add multiple summoners at once
+@router.post("/bulk", summary="Adds multiple summoners to the database.", response_model=dict)
+async def add_bulk_summoners(data: List[SummonerCreate]):
+    added_summoners = []
+    failed_summoners = []
+
+    for summoner_data in data:
+        try:
+            summoner = await SummonerCRUD.add_summoner(summoner_data)
+            added_summoners.append(summoner)
+        except DuplicateKeyError:
+            failed_summoners.append({"name": summoner_data.name, "error": "Summoner already exists"})
+
+    result = {
+        "added_summoners": added_summoners,
+        "failed_summoners": failed_summoners
+    }
+
+    return result
+
+
 @router.delete("/{summoner_puuid}", summary="Deletes a summoner from the database.")
 async def delete_summoner(summoner_puuid: str):
     summoner = await SummonerCRUD.get(puuid=summoner_puuid)
