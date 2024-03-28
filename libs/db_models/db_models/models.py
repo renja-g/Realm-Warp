@@ -93,7 +93,7 @@ class Summoner(Document):
     platform: PlatformEnum
     profileIconId: int
     puuid: str
-    summonerId: str = Field(alias='id')
+    summonerId: str
     summonerLevel: int
     tagLine: str
 
