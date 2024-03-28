@@ -1,8 +1,0 @@
-node_modules
-.svelte-kit
-build
-.eslint*
-.prettier*
-README.md
-Dockerfile
-.git*

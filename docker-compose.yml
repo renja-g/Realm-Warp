@@ -1,0 +1,57 @@
+services:
+
+  mongodb:
+    image: mongo
+    restart: unless-stopped
+    ports:
+      - 27017:27017
+    networks:
+      - app-network
+    volumes:
+      - mongodb-data:/data/db
+    env_file:
+      - .env
+
+  ratelimiter:
+    build: ./services/ratelimiter
+    ports:
+      - "12227:12227"
+    networks:
+      - app-network
+
+  watcher:
+    build:
+      context: .
+      dockerfile: ./services/watcher/Dockerfile
+    depends_on:
+      - mongodb
+      - ratelimiter
+    networks:
+      - app-network
+    environment:
+      - RATELIMITER_HOST=ratelimiter
+      - RATELIMITER_PORT=12227
+      - MONGO_HOST=mongodb
+
+  api:
+    build:
+      context: .
+      dockerfile: ./services/api/Dockerfile
+    depends_on:
+      - mongodb
+      - ratelimiter
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
+    environment:
+      - RATELIMITER_HOST=ratelimiter
+      - RATELIMITER_PORT=12227
+      - DATABASE_HOSTNAME=mongodb
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongodb-data:
