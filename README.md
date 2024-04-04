@@ -1,5 +1,6 @@
 # Realm-Warp
-Realm-Warp is a project designed to track and collect summoner, match, and league data from the Riot API. It aims to enhance this data and store it in a MongoDB database for further use. Additionally, it provides an API for adding and deleting summoners as well as retrieving a list of currently tracked summoners.
+Realm-Warp is a project designed to track and collect summoner, match, and league data from the Riot API. It aims to enhance this data and store it in a MongoDB database for further use. Additionally, it provides an API for adding and deleting summoners, as well as retrieving a list of currently tracked summoners.
+By focusing the full API limit on a few summoners, this project is abler to provide league information per match.
 
 ## Components
 All components are packaged using Docker
