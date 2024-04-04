@@ -19,20 +19,20 @@ class Settings(BaseSettings):
     ALLOWED_HOSTS: list[str] = ['localhost', '127.0.0.1']
 
     # PROJECT NAME, VERSION AND DESCRIPTION
-    PROJECT_NAME: str
-    VERSION: str
-    DESCRIPTION: str
+    PROJECT_NAME: str = "Realm Warp"
+    VERSION: str = "0.1.0"
+    DESCRIPTION: str = "Realm-Warp tracks summoner, match, and league data from Riot API, enhancing and storing it in MongoDB. It also offers an API for managing summoners and retrieving tracked summoner lists."
 
     # MONGODB
     DATABASE_HOSTNAME: str = 'localhost'
     MONGO_INITDB_ROOT_USERNAME: str
     MONGO_INITDB_ROOT_PASSWORD: str
     DATABASE_PORT: int = 27017
-    DATABASE_DB: str
+    DATABASE_DB: str = "watcher_db"
 
     # FIRST SUPERUSER
-    FIRST_SUPERUSER_USERNAME: str
-    FIRST_SUPERUSER_PASSWORD: str
+    SUPERUSER_USERNAME: str
+    SUPERUSER_PASSWORD: str
 
     # PULSEFIRE SETTINGS
     RIOT_API_KEY: str
