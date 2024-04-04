@@ -38,6 +38,69 @@ The API is fully typed and documented using the OpenAPI specification. Available
 6. Add summoners that should be tracked using the api `localhost:8000/docs`
 
 
+## Data schema
+Collections:
+`summoners`, `league_entries`, `matches`
+
+summoner:
+```json
+{
+  "_id": "6605de2491f4a6ad161486d2",
+  "gameName": "Ayato",
+  "name": "G5 Easy",
+  "platform": "euw1",
+  "profileIconId": 5641,
+  "puuid": "qAlgGTtahafad2HMEnvMOYJjBteuqrTYjdLMyIEju82VW8-U6Ggwvkk8F8MIgUua0m_ExkzpYwQjVQ",
+  "summonerId": "LqtoCvKonkHZI0nUN0FUhJ3aOaGMaU-qy5VpNUfUoUlceUI",
+  "summonerLevel": 406,
+  "tagLine": "11235"
+}
+```
+
+league_entry:
+```json
+{
+  "_id": "6605de3af37139da4fa483b5",
+  "leagueId": "28fde316-4e41-4efe-8408-984ac7880861",
+  "queueType": "RANKED_FLEX_SR",
+  "tier": "PLATINUM",
+  "rank": "II",
+  "summonerId": "LqtoCvKonkHZI0nUN0FUhJ3aOaGMaU-qy5VpNUfUoUlceUI",
+  "leaguePoints": 50,
+  "wins": 12,
+  "losses": 17,
+  "hotStreak": false,
+  "veteran": false,
+  "freshBlood": false,
+  "inactive": false,
+  "miniSeries": null,
+  "ref_summoner": "6605de2491f4a6ad161486d2"
+}
+```
+
+match:
+```json
+{
+  "_id": "6605de3af37139da4fa483b5",
+  "metadata": {},
+  "info": {
+    "...",
+    "participants": [
+      {
+        "league": {
+          "leaguePoints": 50,
+          "tier": "PLATINUM",
+          "rank": "II",
+        }
+      },
+      {}
+    ]
+  },
+  "ref_summoners": ["6605de2491f4a6ad161486d2"],
+}
+```
+The `league` object is added to ranked matches and filled with the league information of the summoner **after the match**.
+
 ## FAQ
 <details>
   <summary>FAQ</summary>
