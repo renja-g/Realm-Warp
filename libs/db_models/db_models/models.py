@@ -172,7 +172,7 @@ class MetadataDTO(BaseModel):
 
 
 class MatchInfoDTO(BaseModel):
-    endOfGameResult: str
+    endOfGameResult: Optional[str] = None
     gameCreation: int
     gameDuration: int
     gameEndTimestamp: int
