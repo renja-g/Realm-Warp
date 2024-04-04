@@ -4,6 +4,7 @@ By focusing the full API limit on a few summoners, this project is abler to prov
 
 ## Components
 All components are packaged using Docker
+![image](https://github.com/renja-g/Realm-Warp/assets/76645494/b0b26cee-cd27-4d18-b846-4a5a3a6aa5f3)
 
 
 ### Ratelimiter
