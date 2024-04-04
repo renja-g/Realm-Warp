@@ -1,16 +1,21 @@
-# Progress
+# Realm-Warp
+Is a project, that aims to track and collect summoner, match and league data.
+And make enhancements to it. Everything will be saved in a MongoDB Database ready to be used.
+This project also provides a small API to add and delete summoners that are being tracked as well as getting a list of currently tracked summoners.
 
-## backend:
-- [x] Ratelimiter proxy
+## Components
 
-- [x] Database (MongoDB)
+### Ratelimiter
+A proxy ratelimiter implemnted using Pulsfire that is used by all parts of the porject that interact with the Riot API.
 
-- [x] Watcher
-    - [x] Track summoner info
-    - [x] Track league entries
-    - [x] Track match history
-    - [X] Enhance watcher match data with league data
+### Watcher
+The Watcher is the core of this project. It tracks all summoner info league data and matches played.
+- Track summoner info
+- Track league entries
+- Track match history
+- Enhance watcher match data with league data
 
-- [x] API
-    - [x] Admin auth (JWT) needed for endpoints like POST or DELETE /summoner
-    - [x] Summoner(GET ALL, POST, GET, DELETE)
+## API
+- POST /summoner (`gameName`, `tagLine`, `platform`)
+- DELTE /summoner (`puuid`)
+- /auth
