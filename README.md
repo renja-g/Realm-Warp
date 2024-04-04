@@ -36,3 +36,11 @@ The API is fully typed and documented using the OpenAPI specification. Available
 4. Run `docker compose up -d` to start everything.
 
 6. Add summoners that should be tracked using the api `localhost:8000/docs`
+
+
+## FAQ
+<details>
+  <summary>FAQ</summary>
+
+  No questions till now...
+</details>
