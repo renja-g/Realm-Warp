@@ -1,14 +1,14 @@
 # Realm-Warp
 Realm-Warp is a project designed to track and collect summoner, match, and league data from the Riot API. It aims to enhance this data and store it in a MongoDB database for further use. Additionally, it provides an API for adding and deleting summoners, as well as retrieving a list of currently tracked summoners.
-By focusing the full API limit on a few summoners, this project is abler to provide league information per match.
+By focusing the full API limit on a few summoners, this project is able to provide league information per match.
 
 ## Components
-All components are packaged using Docker
+All components are packaged using Docker.
 ![image](https://github.com/renja-g/Realm-Warp/assets/76645494/b0b26cee-cd27-4d18-b846-4a5a3a6aa5f3)
 
 
 ### Ratelimiter
-A proxy ratelimiter implemented using Pulsfire that is used by all parts of the porject that interact with the Riot API.
+A proxy ratelimiter implemented using Pulsfire that is used by all parts of the project that interact with the Riot API.
 
 ### Watcher
 The Watcher serves as the core component of Realm-Warp. It tracks summoner information, league data, and match history. Key functionalities include:
@@ -33,11 +33,11 @@ The API is fully typed and documented using the OpenAPI specification. Available
 2. `cd Realm-Warp`
 
 3. Copy the `.env.example` and name it to `.env`. Fill out the .env
-   <br>Tipp: to generate a secret key or password run `python -c 'import secrets; print(secrets.token_urlsafe(32))'`
+   <br>Tip: to generate a secret key or password, run `python -c 'import secrets; print(secrets.token_urlsafe(32))'`
 
 4. Run `docker compose up -d` to start everything.
 
-6. Add summoners that should be tracked using the api `localhost:8000/docs`
+6. Add summoners that should be tracked using the API `localhost:8000/docs`
 
 
 ## Data schema
