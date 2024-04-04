@@ -18,4 +18,5 @@ The Watcher is the core of this project. It tracks all summoner info league data
 ## API
 - POST /summoner (`gameName`, `tagLine`, `platform`)
 - DELTE /summoner (`puuid`)
-- /auth
+- GET /summoner /summoner/{puuid}
+- POST /access-token /refresh-token
