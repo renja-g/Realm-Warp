@@ -8,7 +8,7 @@ All components are packaged using Docker
 
 
 ### Ratelimiter
-A proxy ratelimiter implemnted using Pulsfire that is used by all parts of the porject that interact with the Riot API.
+A proxy ratelimiter implemented using Pulsfire that is used by all parts of the porject that interact with the Riot API.
 
 ### Watcher
 The Watcher serves as the core component of Realm-Warp. It tracks summoner information, league data, and match history. Key functionalities include:
