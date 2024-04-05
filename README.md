@@ -5,6 +5,7 @@ By focusing the full API limit on a few summoners, this project is able to provi
 ## Components
 All components are packaged using Docker.
 ![image](https://github.com/renja-g/Realm-Warp/assets/76645494/b0b26cee-cd27-4d18-b846-4a5a3a6aa5f3)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Frenja-g%2FRealm-Warp.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Frenja-g%2FRealm-Warp?ref=badge_shield)
 
 
 ### Ratelimiter
@@ -109,3 +110,7 @@ The `league` object is added to ranked matches and filled with the league inform
 
   No questions till now...
 </details>
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Frenja-g%2FRealm-Warp.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Frenja-g%2FRealm-Warp?ref=badge_large)
