@@ -49,7 +49,6 @@ summoner:
 {
 + "_id": "6605de2491f4a6ad161486d2",
 + "gameName": "Ayato",
-  "name": "G5 Easy",
 + "platform": "euw1",
   "profileIconId": 5641,
   "puuid": "qAlgGTtahafad2HMEnvMOYJjBteuqrTYjdLMyIEju82VW8-U6Ggwvkk8F8MIgUua0m_ExkzpYwQjVQ",
