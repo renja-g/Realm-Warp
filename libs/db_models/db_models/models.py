@@ -89,7 +89,6 @@ class User(Document):
 
 class Summoner(Document):
     gameName: str
-    name: str
     platform: PlatformEnum
     profileIconId: int
     puuid: str
