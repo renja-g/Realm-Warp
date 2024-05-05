@@ -74,6 +74,7 @@ class TimelineEventEnum(str, Enum):
 class TeamIdEnum(int, Enum):
     BLUE = 100
     RED = 200
+    ARENA = 0 # to support arena empty team
 
 
 class User(Document):
