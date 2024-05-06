@@ -513,7 +513,6 @@ class MissionsDTO(BaseModel):
                 new_values[key.replace('PlayerScore', 'playerScore')] = value
             else:
                 new_values[key] = value
-        print('Renamed playerScore keys')
         return new_values
 
 
