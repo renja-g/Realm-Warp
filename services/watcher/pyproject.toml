@@ -10,7 +10,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.12"
 db_models = {path = "../../libs/db_models/"}
-pulsefire = "^2.0.8"
+pulsefire = "^2.0.10"
 orjson = "^3.9.15"
 python-dotenv = "^1.0.1"
 

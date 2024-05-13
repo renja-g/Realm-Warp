@@ -9,7 +9,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-pulsefire = "^2.0.8"
+pulsefire = "^2.0.10"
 
 
 [build-system]
