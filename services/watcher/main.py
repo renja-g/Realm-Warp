@@ -152,7 +152,7 @@ async def update_league_entries(
     riot_league_entries: list[LeagueEntry] | None, db_league_entries: list[LeagueEntry]
 ) -> list[LeagueEntry] | None:
     if not riot_league_entries:
-        return
+        return db_league_entries
     for riot_league_entry in riot_league_entries:
         for db_league_entry in db_league_entries:
             if riot_league_entry.queueType == db_league_entry.queueType:

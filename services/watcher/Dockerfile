@@ -13,6 +13,7 @@ COPY services/watcher/pyproject.toml services/watcher/poetry.lock ./
 
 COPY libs/db_models/ /libs/db_models
 
+RUN poetry lock --no-update
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --only main --no-root
 
 

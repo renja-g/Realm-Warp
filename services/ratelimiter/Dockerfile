@@ -11,6 +11,7 @@ ENV POETRY_NO_INTERACTION=1 \
 
 COPY pyproject.toml poetry.lock ./
 
+RUN poetry lock --no-update
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --only main --no-root
 
 

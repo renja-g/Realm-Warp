@@ -358,6 +358,9 @@ class ChallengesDTO(BaseModel):
             print('----------------------------')
 
     abilityUses: Optional[int] = None
+    InfernalScalePickup : Optional[int] = None
+    voidMonsterKill: Optional[int] = None
+    fistBumpParticipation: Optional[int] = None
     acesBefore15Minutes: Optional[int] = None
     alliedJungleMonsterKills: Optional[int] = None
     baronBuffGoldAdvantageOverThreshold: Optional[int] = None
