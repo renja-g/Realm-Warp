@@ -51,8 +51,9 @@ PLATFORM_TO_REGION = {
 }
 
 QUEUE_TYPE_TO_QUEUE_ID = {
-    'RANKED_SOLO_5x5': 420,
-    'RANKED_FLEX_SR': 440,
+    'RANKED_SOLO_5x5': [420],
+    'RANKED_FLEX_SR': [440],
+    'CHERRY': [1700, 1710],
 }
 
 
@@ -217,7 +218,7 @@ async def update_matches(
         if db_match.info.queueId in (420, 440):
             # add ranked information to the match
             for db_league_entry in db_league_entries:
-                if QUEUE_TYPE_TO_QUEUE_ID[db_league_entry.queueType] == db_match.info.queueId:
+                if db_match.info.queueId in QUEUE_TYPE_TO_QUEUE_ID[db_league_entry.queueType]:
                     for participant in db_match.info.participants:
                         if participant.puuid == db_summoner.puuid:
                             participant.league = {
@@ -239,7 +240,7 @@ async def update_matches(
         if riot_match.info.queueId in (420, 440):
             # add ranked information to the match
             for db_league_entry in db_league_entries:
-                if QUEUE_TYPE_TO_QUEUE_ID[db_league_entry.queueType] == riot_match.info.queueId:
+                if riot_match.info.queueId in QUEUE_TYPE_TO_QUEUE_ID[db_league_entry.queueType]:
                     for participant in riot_match.info.participants:
                         if participant.puuid == db_summoner.puuid:
                             participant.league = {
