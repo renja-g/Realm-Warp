@@ -236,7 +236,7 @@ async def update_matches(
         # get the match from the riot api
         riot_match = await get_riot_match(client, riot_match_id, db_summoner)
 
-        # check if the match is a ranked match
+        # check if the match is a ranked match (SOLO/DUO or FLEX)
         if riot_match.info.queueId in (420, 440):
             # add ranked information to the match
             for db_league_entry in db_league_entries:
@@ -252,6 +252,22 @@ async def update_matches(
                     break
             else:
                 LOGGER.info(f'League entry not found for match {riot_match_id} (placement match)')
+
+        # Check if the match is an Arena match
+        if riot_match.info.queueId in (1700, 1710):
+            # add ranked information to the match
+            for db_league_entry in db_league_entries:
+                if riot_match.info.queueId in QUEUE_TYPE_TO_QUEUE_ID[db_league_entry.queueType]:
+                    for participant in riot_match.info.participants:
+                        if participant.puuid == db_summoner.puuid:
+                            participant.league = {
+                                'leaguePoints': db_league_entry.leaguePoints,
+                            }
+                            break
+                    break
+            else:
+                LOGGER.info(f'League entry not found for match {riot_match_id} (placement match)')
+
         await riot_match.insert()
         LOGGER.info(f'Inserted new match {riot_match_id}', tags=['INSERT'])
         # get the timeline of the match
