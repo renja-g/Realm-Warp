@@ -1,6 +1,6 @@
 from functools import cached_property
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Union
 
 from pydantic import AnyHttpUrl, MongoDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     SECURITY_BCRYPT_ROUNDS: int = 12
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 11520  # 8 days
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 40320  # 28 days
-    BACKEND_CORS_ORIGINS: list[AnyHttpUrl] = []
+    BACKEND_CORS_ORIGINS: list[AnyHttpUrl | Literal['*']] = []
     ALLOWED_HOSTS: list[str] = ['localhost', '127.0.0.1']
 
     # PROJECT NAME, VERSION AND DESCRIPTION
