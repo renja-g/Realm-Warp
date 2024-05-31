@@ -358,9 +358,6 @@ class ChallengesDTO(BaseModel):
             print('----------------------------')
 
     abilityUses: Optional[int] = None
-    InfernalScalePickup : Optional[int] = None
-    voidMonsterKill: Optional[int] = None
-    fistBumpParticipation: Optional[int] = None
     acesBefore15Minutes: Optional[int] = None
     alliedJungleMonsterKills: Optional[int] = None
     baronBuffGoldAdvantageOverThreshold: Optional[int] = None
@@ -395,6 +392,7 @@ class ChallengesDTO(BaseModel):
     fastestLegendary: Optional[float] = None
     firstTurretKilled: Optional[int] = None
     firstTurretKilledTime: Optional[float] = None
+    fistBumpParticipation: Optional[int] = None
     flawlessAces: Optional[int] = None
     fullTeamTakedown: Optional[int] = None
     gameLength: Optional[float] = None
@@ -406,6 +404,7 @@ class ChallengesDTO(BaseModel):
     highestCrowdControlScore: Optional[int] = None
     highestWardKills: Optional[int] = None
     immobilizeAndKillWithAlly: Optional[int] = None
+    InfernalScalePickup : Optional[int] = None
     initialBuffCount: Optional[int] = None
     initialCrabCount: Optional[int] = None
     jungleCsBefore10Minutes: Optional[float] = None
@@ -486,6 +485,7 @@ class ChallengesDTO(BaseModel):
     unseenRecalls: Optional[int] = None
     visionScoreAdvantageLaneOpponent: Optional[float] = None
     visionScorePerMinute: Optional[float] = None
+    voidMonsterKill: Optional[int] = None
     wardsGuarded: Optional[int] = None
     wardTakedowns: Optional[int] = None
     wardTakedownsBefore20M: Optional[int] = None
