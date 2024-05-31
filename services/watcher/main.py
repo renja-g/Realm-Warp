@@ -51,9 +51,8 @@ PLATFORM_TO_REGION = {
 }
 
 QUEUE_TYPE_TO_QUEUE_ID = {
-    'RANKED_SOLO_5x5': [420],
-    'RANKED_FLEX_SR': [440],
-    'CHERRY': [1700, 1710],
+    'RANKED_SOLO_5x5': 420,
+    'RANKED_FLEX_SR': 440,
 }
 
 
@@ -152,7 +151,7 @@ async def update_league_entries(
     riot_league_entries: list[LeagueEntry] | None, db_league_entries: list[LeagueEntry]
 ) -> list[LeagueEntry] | None:
     if not riot_league_entries:
-        return db_league_entries
+        return
     for riot_league_entry in riot_league_entries:
         for db_league_entry in db_league_entries:
             if riot_league_entry.queueType == db_league_entry.queueType:
@@ -218,7 +217,7 @@ async def update_matches(
         if db_match.info.queueId in (420, 440):
             # add ranked information to the match
             for db_league_entry in db_league_entries:
-                if db_match.info.queueId in QUEUE_TYPE_TO_QUEUE_ID[db_league_entry.queueType]:
+                if QUEUE_TYPE_TO_QUEUE_ID[db_league_entry.queueType] == db_match.info.queueId:
                     for participant in db_match.info.participants:
                         if participant.puuid == db_summoner.puuid:
                             participant.league = {
@@ -236,11 +235,11 @@ async def update_matches(
         # get the match from the riot api
         riot_match = await get_riot_match(client, riot_match_id, db_summoner)
 
-        # check if the match is a ranked match (SOLO/DUO or FLEX)
+        # check if the match is a ranked match
         if riot_match.info.queueId in (420, 440):
             # add ranked information to the match
             for db_league_entry in db_league_entries:
-                if riot_match.info.queueId in QUEUE_TYPE_TO_QUEUE_ID[db_league_entry.queueType]:
+                if QUEUE_TYPE_TO_QUEUE_ID[db_league_entry.queueType] == riot_match.info.queueId:
                     for participant in riot_match.info.participants:
                         if participant.puuid == db_summoner.puuid:
                             participant.league = {
@@ -252,22 +251,6 @@ async def update_matches(
                     break
             else:
                 LOGGER.info(f'League entry not found for match {riot_match_id} (placement match)')
-
-        # Check if the match is an Arena match
-        if riot_match.info.queueId in (1700, 1710):
-            # add ranked information to the match
-            for db_league_entry in db_league_entries:
-                if riot_match.info.queueId in QUEUE_TYPE_TO_QUEUE_ID[db_league_entry.queueType]:
-                    for participant in riot_match.info.participants:
-                        if participant.puuid == db_summoner.puuid:
-                            participant.league = {
-                                'leaguePoints': db_league_entry.leaguePoints,
-                            }
-                            break
-                    break
-            else:
-                LOGGER.info(f'League entry not found for match {riot_match_id} (placement match)')
-
         await riot_match.insert()
         LOGGER.info(f'Inserted new match {riot_match_id}', tags=['INSERT'])
         # get the timeline of the match
