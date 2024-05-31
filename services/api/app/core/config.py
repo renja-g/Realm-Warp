@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     MONGO_INITDB_ROOT_USERNAME: str
     MONGO_INITDB_ROOT_PASSWORD: str
     DATABASE_PORT: int = 27017
-    DATABASE_DB: str = "watcher_db"
+    MONGO_DB: str = "watcher_db"
 
     # FIRST SUPERUSER
     SUPERUSER_USERNAME: str
