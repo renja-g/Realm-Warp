@@ -116,6 +116,9 @@ async def get_riot_league_entries(
     league_entries = await client.get_lol_league_v4_entries_by_summoner(
         region=summoner.platform.value, summoner_id=summoner.summonerId
     )
+    # Filter out entries with queueType 'CHERRY'
+    league_entries = [entry for entry in league_entries if entry['queueType'] != 'CHERRY']
+
     if league_entries:
         return [
             LeagueEntry(**league_entry, ref_summoner=summoner.id) for league_entry in league_entries
