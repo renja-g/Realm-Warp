@@ -298,6 +298,9 @@ async def main():
                         ),
                     )
 
+                    # Ensure db_league_entries is an empty list if None
+                    db_league_entries = db_league_entries or []
+
                     # check if summoner has played a new match
                     riot_last_match_id = await client.get_lol_match_v5_match_ids_by_puuid(
                         region=PLATFORM_TO_REGION[db_summoner.platform.value],
