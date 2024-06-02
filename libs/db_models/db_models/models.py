@@ -495,18 +495,18 @@ class ChallengesDTO(BaseModel):
 
 
 class MissionsDTO(BaseModel):
-    playerScore0: int
-    playerScore1: int
-    playerScore10: int
-    playerScore11: int
-    playerScore2: int
-    playerScore3: int
-    playerScore4: int
-    playerScore5: int
-    playerScore6: int
-    playerScore7: int
-    playerScore8: int
-    playerScore9: int
+    playerScore0: Optional[int] = None
+    playerScore1: Optional[int] = None
+    playerScore10: Optional[int] = None
+    playerScore11: Optional[int] = None
+    playerScore2: Optional[int] = None
+    playerScore3: Optional[int] = None
+    playerScore4: Optional[int] = None
+    playerScore5: Optional[int] = None
+    playerScore6: Optional[int] = None
+    playerScore7: Optional[int] = None
+    playerScore8: Optional[int] = None
+    playerScore9: Optional[int] = None
 
     @model_validator(mode='before')
     def validate_keys(cls, values: dict[str, any]) -> dict[str, any]:
@@ -586,7 +586,7 @@ class Timeline(Document):
 
 
 class TimelineInfoDTO(BaseModel):
-    endOfGameResult: str
+    endOfGameResult: Optional[str] = None
     frameInterval: int
     frames: list['FrameDTO']
     gameId: int
