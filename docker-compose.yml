@@ -21,17 +21,13 @@ services:
 
   watcher:
     build:
-      context: .
-      dockerfile: ./services/watcher/Dockerfile
+      context: ./watcher
+      dockerfile: ./Dockerfile
     depends_on:
       - mongodb
-      - ratelimiter
     networks:
       - app-network
-    environment:
-      - RATELIMITER_HOST=ratelimiter
-      - RATELIMITER_PORT=12227
-      - MONGO_HOST=mongodb
+
 
   api:
     build:
