@@ -13,7 +13,7 @@ services:
       - .env
 
   ratelimiter:
-    build: ./services/ratelimiter
+    build: ./ratelimiter
     ports:
       - "12227:12227"
     networks:
@@ -36,7 +36,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: ./services/api/Dockerfile
+      dockerfile: ./api/Dockerfile
     depends_on:
       - mongodb
       - ratelimiter
