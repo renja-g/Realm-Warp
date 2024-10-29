@@ -1,5 +1,8 @@
 import asyncio
+import os
+import logging
 
+from dotenv import load_dotenv
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
     AsyncIOMotorDatabase,
@@ -9,8 +12,22 @@ from pulsefire.clients import RiotAPIClient
 from pulsefire.schemas import RiotAPISchema
 
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+load_dotenv()
+
+ENV = os.getenv("ENV")
+MONGO_INITDB_ROOT_USERNAME = os.getenv("MONGO_INITDB_ROOT_USERNAME")
+MONGO_INITDB_ROOT_PASSWORD = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
+MONGO_PORT = os.getenv("MONGO_PORT")
+MONGO_HOST = os.getenv("MONGO_HOST")
+if ENV == "DEV":
+    MONGO_HOST = "localhost"
+
 client: AsyncIOMotorClient = AsyncIOMotorClient(
-    "mongodb://root:CHANGE_THIS@localhost:27017"
+    f"mongodb://{MONGO_INITDB_ROOT_USERNAME}:{MONGO_INITDB_ROOT_PASSWORD}@{MONGO_HOST}:{MONGO_PORT}"
 )
 db: AsyncIOMotorDatabase = client["realm_warp"]
 summoners_col: AsyncIOMotorCollection = db["summoners"]
@@ -230,9 +247,9 @@ async def main():
             summoners = await get_summoners_from_db()
             for db_summoner in summoners:
                 api_summoner = await get_summoner_from_api(client, db_summoner)
-                print(f"Checking summoner {api_summoner['gameName']}#{api_summoner['tagLine']}")
+                logger.info(f"Checking summoner {api_summoner['gameName']}#{api_summoner['tagLine']}")
                 if await update_summoner_profile(api_summoner):
-                    print(f"Updated summoner {api_summoner['gameName']}#{api_summoner['tagLine']}")
+                    logger.info(f"Updated summoner {api_summoner['gameName']}#{api_summoner['tagLine']}")
                 await update_summoner_matches(client, api_summoner)
             await asyncio.sleep(60)
 

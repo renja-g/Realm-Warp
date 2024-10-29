@@ -8,4 +8,5 @@ dependencies = [
     "motor>=3.6.0",
     "orjson>=3.10.10",
     "pulsefire>=2.0.13",
+    "python-dotenv>=1.0.1",
 ]
