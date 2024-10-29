@@ -204,16 +204,13 @@ async def update_summoner_matches(client: RiotAPIClient, summoner):
     # Enhance the match with the league info
     for participant in match_data["info"]["participants"]:
         if participant["puuid"] == summoner["puuid"]:
+            queue_type = QUEUE_ID_TO_QUEUE_TYPE[match_data["info"]["queueId"]]
+            league_info = leagues.get(queue_type, {})
+            
             participant["league"] = {
-                "leaguePoints": leagues[
-                    QUEUE_ID_TO_QUEUE_TYPE[match_data["info"]["queueId"]]
-                ]["leaguePoints"],
-                "tier": leagues[QUEUE_ID_TO_QUEUE_TYPE[match_data["info"]["queueId"]]][
-                    "tier"
-                ],
-                "rank": leagues[QUEUE_ID_TO_QUEUE_TYPE[match_data["info"]["queueId"]]][
-                    "rank"
-                ],
+                "leaguePoints": league_info.get("leaguePoints", None),
+                "tier": league_info.get("tier", None),
+                "rank": league_info.get("rank", None)
             }
             break
 
@@ -233,7 +230,8 @@ async def main():
             summoners = await get_summoners_from_db()
             for db_summoner in summoners:
                 api_summoner = await get_summoner_from_api(client, db_summoner)
-                if update_summoner_profile(api_summoner):
+                print(f"Checking summoner {api_summoner['gameName']}#{api_summoner['tagLine']}")
+                if await update_summoner_profile(api_summoner):
                     print(f"Updated summoner {api_summoner['gameName']}#{api_summoner['tagLine']}")
                 await update_summoner_matches(client, api_summoner)
             await asyncio.sleep(60)
