@@ -10,7 +10,13 @@ from motor.motor_asyncio import (
 )
 from pulsefire.clients import RiotAPIClient
 from pulsefire.schemas import RiotAPISchema
-
+from pulsefire.ratelimiters import RiotAPIRateLimiter
+from pulsefire.middlewares import (
+    http_error_middleware,
+    json_response_middleware,
+    rate_limiter_middleware,
+)
+import orjson
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,8 +28,13 @@ MONGO_INITDB_ROOT_USERNAME = os.getenv("MONGO_INITDB_ROOT_USERNAME")
 MONGO_INITDB_ROOT_PASSWORD = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
 MONGO_PORT = os.getenv("MONGO_PORT")
 MONGO_HOST = os.getenv("MONGO_HOST")
+RIOT_API_KEY = os.getenv("RIOT_API_KEY")
+RATE_LIMITER_HOST = os.getenv("RATE_LIMITER_HOST")
+RATE_LIMITER_PORT = os.getenv("RATE_LIMITER_PORT")
 if ENV == "DEV":
     MONGO_HOST = "localhost"
+    RATE_LIMITER_HOST = "localhost"
+
 
 client: AsyncIOMotorClient = AsyncIOMotorClient(
     f"mongodb://{MONGO_INITDB_ROOT_USERNAME}:{MONGO_INITDB_ROOT_PASSWORD}@{MONGO_HOST}:{MONGO_PORT}"
@@ -240,7 +251,16 @@ async def update_summoner_matches(client: RiotAPIClient, summoner):
 
 async def main():
     async with RiotAPIClient(
-        default_headers={"X-Riot-Token": "RGAPI-56d3e52c-f4b0-45f5-bc6b-fa26ec176581"}
+        default_headers={'X-Riot-Token': RIOT_API_KEY},
+        middlewares=[
+            json_response_middleware(orjson.loads),
+            http_error_middleware(3),
+            rate_limiter_middleware(
+                RiotAPIRateLimiter(
+                    proxy=f'http://{RATE_LIMITER_HOST}:{RATE_LIMITER_PORT}'
+                )
+            ),
+        ],
     ) as client:
         while True:
             summoners = await get_summoners_from_db()
@@ -250,7 +270,7 @@ async def main():
                 if await update_summoner_profile(api_summoner):
                     logger.info(f"Updated summoner {api_summoner['gameName']}#{api_summoner['tagLine']}")
                 await update_summoner_matches(client, api_summoner)
-            await asyncio.sleep(60)
+            await asyncio.sleep(10)
 
 
 if __name__ == "__main__":

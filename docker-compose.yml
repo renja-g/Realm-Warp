@@ -12,8 +12,8 @@ services:
     env_file:
       - .env
 
-  ratelimiter:
-    build: ./ratelimiter
+  rate_limiter:
+    build: ./rate_limiter
     ports:
       - "12227:12227"
     networks:
@@ -29,6 +29,7 @@ services:
       - ENV=PROD
     depends_on:
       - mongodb
+      - rate_limiter
     networks:
       - app-network
 
@@ -39,7 +40,7 @@ services:
       dockerfile: ./api/Dockerfile
     depends_on:
       - mongodb
-      - ratelimiter
+      - rate_limiter
     ports:
       - "8000:8000"
     networks:

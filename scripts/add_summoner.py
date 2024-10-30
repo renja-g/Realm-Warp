@@ -1,5 +1,6 @@
 import asyncio
 import sys
+import os
 
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
@@ -7,8 +8,7 @@ from motor.motor_asyncio import (
     AsyncIOMotorCollection,
 )
 from pulsefire.clients import RiotAPIClient
-from pulsefire.schemas import RiotAPISchema
-
+from dotenv import load_dotenv
 
 client: AsyncIOMotorClient = AsyncIOMotorClient(
     "mongodb://root:CHANGE_THIS@localhost:27017"
@@ -16,6 +16,8 @@ client: AsyncIOMotorClient = AsyncIOMotorClient(
 db: AsyncIOMotorDatabase = client["realm_warp"]
 summoners_col: AsyncIOMotorCollection = db["summoners"]
 
+load_dotenv()
+RIOT_API_KEY = os.getenv("RIOT_API_KEY")
 
 if len(sys.argv) != 4:
     print("Usage: python add_summoner.py <game_name> <tag_line> <platform>")
@@ -47,7 +49,7 @@ PLATFORM_TO_REGION = {
 
 async def main():
     async with RiotAPIClient(
-        default_headers={"X-Riot-Token": "RGAPI-56d3e52c-f4b0-45f5-bc6b-fa26ec176581"}
+        default_headers={"X-Riot-Token": RIOT_API_KEY}
     ) as client:
         summoner = await summoners_col.find_one(
             {
