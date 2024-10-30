@@ -12,7 +12,6 @@ from pulsefire.clients import RiotAPIClient
 from pulsefire.schemas import RiotAPISchema
 
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
