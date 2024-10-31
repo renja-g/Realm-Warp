@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 class BaseRequest(BaseModel):
@@ -15,11 +15,5 @@ class UserUpdatePasswordRequest(BaseRequest):
 
 
 class UserCreateRequest(BaseRequest):
-    username: str
+    email: EmailStr
     password: str
-
-
-class SummonerCreateRequest(BaseRequest):
-    gameName: str
-    tagLine: str
-    platform: str

@@ -1,38 +1,31 @@
-FROM python:3.12.2-bullseye as builder
+FROM python:3.12-slim-bookworm
+COPY --from=ghcr.io/astral-sh/uv:0.4.28 /uv /uvx /bin/
+
+ADD . /app/
 
 WORKDIR /app
 
-RUN pip install poetry==1.8.2
+# Enable bytecode compilation
+ENV UV_COMPILE_BYTECODE=1
 
-ENV POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_IN_PROJECT=1 \
-    POETRY_VIRTUALENVS_CREATE=1 \
-    POETRY_CACHE_DIR=/tmp/poetry_cache
+# Copy from the cache instead of linking since it's a mounted volume
+ENV UV_LINK_MODE=copy
 
-COPY api/pyproject.toml api/poetry.lock ./
+# Install the project's dependencies using the lockfile and settings
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-install-project --no-dev
 
-COPY libs/db_models/ /libs/db_models
+# Installing separately from its dependencies allows optimal layer caching
+ADD . /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
 
-RUN poetry lock --no-update
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --only main --no-root
+# Place executables in the environment at the front of the path
+ENV PATH="/app/.venv/bin:$PATH"
 
+# Reset the entrypoint, don't invoke `uv`
+ENTRYPOINT []
 
-FROM python:3.12.2-slim-bullseye as runtime
-
-WORKDIR /app
-
-ENV VIRTUAL_ENV=/app/.venv \
-    PATH="/app/.venv/bin:$PATH"
-
-COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
-
-COPY .env ./
-COPY api api/
-
-# Make scripts in .local usable
-ENV PATH=/root/.local/bin:$PATH
-
-EXPOSE 8000
-WORKDIR /app/api
-
-CMD sh init.sh && uvicorn app.main:app --host 0.0.0.0 --port 8000
+CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

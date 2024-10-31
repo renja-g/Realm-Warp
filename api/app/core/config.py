@@ -1,58 +1,102 @@
-from functools import cached_property
+# File with environment variables and general configuration logic.
+# Env variables are combined in nested groups like "Security", "Database" etc.
+# Environment variables are case-insensitive
+#
+# Pydantic priority ordering:
+#
+# 1. (Most important, will overwrite everything) - environment variables
+# 2. `.env` file in root folder of project
+# 3. Default values
+#
+# See https://pydantic-docs.helpmanual.io/usage/settings/
+
+from functools import lru_cache
 from pathlib import Path
 from typing import Literal, Union
 
-from pydantic import AnyHttpUrl, MongoDsn, computed_field
+from pydantic import AnyHttpUrl, BaseModel, SecretStr, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-PROJECT_DIR = Path(__file__).parent.parent.parent.parent.parent
+PROJECT_DIR = Path(__file__).parent.parent.parent.parent
 
 
-class Settings(BaseSettings):
-    # CORE SETTINGS
-    SECRET_KEY: str
-    ENVIRONMENT: Literal['DEV', 'PYTEST', 'STG', 'PRD'] = 'DEV'
-    SECURITY_BCRYPT_ROUNDS: int = 12
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 11520  # 8 days
-    REFRESH_TOKEN_EXPIRE_MINUTES: int = 40320  # 28 days
-    BACKEND_CORS_ORIGINS: list[AnyHttpUrl | Literal['*']] = []
-    ALLOWED_HOSTS: list[str] = ['localhost', '127.0.0.1']
+class Security(BaseModel):
+    jwt_issuer: str = "my-app"
+    jwt_secret_key: SecretStr
+    jwt_access_token_expire_secs: int = 24 * 3600  # 1d
+    refresh_token_expire_secs: int = 28 * 24 * 3600  # 28d
+    password_bcrypt_rounds: int = 12
+    allowed_hosts: list[str] = ["localhost", "127.0.0.1"]
+    backend_cors_origins: list[str] | list[AnyHttpUrl] = ["*"]
 
-    # PROJECT NAME, VERSION AND DESCRIPTION
-    PROJECT_NAME: str = "Realm Warp"
-    VERSION: str = "0.1.0"
-    DESCRIPTION: str = "Realm-Warp tracks summoner, match, and league data from Riot API, enhancing and storing it in MongoDB. It also offers an API for managing summoners and retrieving tracked summoner lists."
 
-    # MONGODB
-    DATABASE_HOSTNAME: str = 'localhost'
-    MONGO_INITDB_ROOT_USERNAME: str
-    MONGO_INITDB_ROOT_PASSWORD: str
-    DATABASE_PORT: int = 27017
-    MONGO_DB: str = "watcher_db"
-
-    # FIRST SUPERUSER
-    SUPERUSER_USERNAME: str
-    SUPERUSER_PASSWORD: str
-
-    # PULSEFIRE SETTINGS
-    RIOT_API_KEY: str
-    RATELIMITER_HOST: str = 'localhost'
-    RATELIMITER_PORT: int = 12227
+class MongoDB(BaseModel):
+    host: str = "mongodb"
+    port: int = 27017
+    username: str
+    password: SecretStr
+    database: str = "app_db"
+    auth_source: str = "admin"
 
     @computed_field
-    @cached_property
-    def DEFAULT_MONGODB_URI(self) -> str:
-        return str(
-            MongoDsn.build(
-                scheme='mongodb',
-                host=self.DATABASE_HOSTNAME,
-                username=self.MONGO_INITDB_ROOT_USERNAME,
-                password=self.MONGO_INITDB_ROOT_PASSWORD,
-                port=self.DATABASE_PORT,
-            )
+    def uri(self) -> str:
+        """
+        Constructs the MongoDB connection URI.
+        Format: mongodb://username:password@host:port/database?authSource=admin
+        """
+        print(
+            f"mongodb://{self.username}:"
+            f"{self.password.get_secret_value()}@"
+            f"{self.host}:{self.port}/"
+            f"{self.database}?"
+            f"authSource={self.auth_source}"
+        )
+        return (
+            f"mongodb://{self.username}:"
+            f"{self.password.get_secret_value()}@"
+            f"{self.host}:{self.port}/"
+            f"{self.database}?"
+            f"authSource={self.auth_source}"
         )
 
-    model_config = SettingsConfigDict(env_file=f'{PROJECT_DIR}/.env', case_sensitive=True)
+
+class Riot(BaseModel):
+    api_key: SecretStr
+
+class Settings(BaseSettings):
+    env: Literal["DEV", "PROD"] = "DEV"
+    security: Security
+    mongodb: MongoDB
+    riot: Riot
+
+    model_config = SettingsConfigDict(
+        env_file=f"{PROJECT_DIR}/.env",
+        case_sensitive=False,
+        env_nested_delimiter="__",
+    )
 
 
-settings: Settings = Settings()  # type: ignore
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    settings = Settings()  # type: ignore
+    
+    if settings.env == "DEV":
+        # Override MongoDB settings for development
+        settings.mongodb.host = "localhost"
+
+        # Add development CORS origins if not already present
+        dev_origins = [
+            "*",
+        ]
+        current_origins = [str(origin) for origin in settings.security.backend_cors_origins]
+        for origin in dev_origins:
+            if origin not in current_origins:
+                settings.security.backend_cors_origins.append(origin)
+        
+        # Add development hosts if not already present
+        dev_hosts = ["localhost", "127.0.0.1", "0.0.0.0"]
+        for host in dev_hosts:
+            if host not in settings.security.allowed_hosts:
+                settings.security.allowed_hosts.append(host)
+
+    return settings # type: ignore
