@@ -1,73 +1,200 @@
+import secrets
 import time
+from typing import Any
 
-import jwt
-from db_models.models import User
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import ValidationError
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from pymongo.errors import DuplicateKeyError
 
-from app.core import config, security
-from app.schemas.requests import RefreshTokenRequest
-from app.schemas.responses import AccessTokenResponse
+from app.api import api_messages, deps
+from app.core.config import get_settings
+from app.core.security.jwt import create_jwt_token
+from app.core.security.password import (
+    DUMMY_PASSWORD,
+    get_password_hash,
+    verify_password,
+)
+from app.schemas.requests import RefreshTokenRequest, UserCreateRequest
+from app.schemas.responses import AccessTokenResponse, UserResponse
 
 router = APIRouter()
 
+ACCESS_TOKEN_RESPONSES: dict[int | str, dict[str, Any]] = {
+    400: {
+        "description": "Invalid email or password",
+        "content": {
+            "application/json": {"example": {"detail": api_messages.PASSWORD_INVALID}}
+        },
+    },
+}
 
-@router.post('/access-token', response_model=AccessTokenResponse)
+REFRESH_TOKEN_RESPONSES: dict[int | str, dict[str, Any]] = {
+    400: {
+        "description": "Refresh token expired or is already used",
+        "content": {
+            "application/json": {
+                "examples": {
+                    "refresh token expired": {
+                        "summary": api_messages.REFRESH_TOKEN_EXPIRED,
+                        "value": {"detail": api_messages.REFRESH_TOKEN_EXPIRED},
+                    },
+                    "refresh token already used": {
+                        "summary": api_messages.REFRESH_TOKEN_ALREADY_USED,
+                        "value": {"detail": api_messages.REFRESH_TOKEN_ALREADY_USED},
+                    },
+                }
+            }
+        },
+    },
+    404: {
+        "description": "Refresh token does not exist",
+        "content": {
+            "application/json": {
+                "example": {"detail": api_messages.REFRESH_TOKEN_NOT_FOUND}
+            }
+        },
+    },
+}
+
+
+@router.post(
+    "/access-token",
+    response_model=AccessTokenResponse,
+    responses=ACCESS_TOKEN_RESPONSES,
+    description="OAuth2 compatible token, get an access token for future requests using username and password",
+)
 async def login_access_token(
+    db: AsyncIOMotorDatabase = Depends(deps.get_db),
     form_data: OAuth2PasswordRequestForm = Depends(),
-):
-    """
-    OAuth2 compatible token,
-    get an access token for future requests using username and password
-    """
-
-    user = await User.find_one(User.username == form_data.username)
+) -> AccessTokenResponse:
+    user = await db.users.find_one({"email": form_data.username})
 
     if user is None:
-        raise HTTPException(status_code=400, detail='Incorrect username or password')
+        # this is naive method to not return early
+        verify_password(form_data.password, DUMMY_PASSWORD)
 
-    if not security.verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(status_code=400, detail='Incorrect username or password')
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=api_messages.PASSWORD_INVALID,
+        )
 
-    return security.generate_access_token_response(str(user.id))
+    if not verify_password(form_data.password, user["hashed_password"]):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=api_messages.PASSWORD_INVALID,
+        )
+
+    jwt_token = create_jwt_token(user_id=str(user["_id"]))
+
+    refresh_token = {
+        "user_id": user["_id"],
+        "refresh_token": secrets.token_urlsafe(32),
+        "exp": int(time.time() + get_settings().security.refresh_token_expire_secs),
+        "used": False,
+    }
+    
+    await db.refresh_tokens.insert_one(refresh_token)
+
+    return AccessTokenResponse(
+        access_token=jwt_token.access_token,
+        expires_at=jwt_token.payload.exp,
+        refresh_token=refresh_token["refresh_token"],
+        refresh_token_expires_at=refresh_token["exp"],
+    )
 
 
-@router.post('/refresh-token', response_model=AccessTokenResponse)
+@router.post(
+    "/refresh-token",
+    response_model=AccessTokenResponse,
+    responses=REFRESH_TOKEN_RESPONSES,
+    description="OAuth2 compatible token, get an access token for future requests using refresh token",
+)
 async def refresh_token(
-    input: RefreshTokenRequest,
-):
-    """OAuth2 compatible token, get an access token for future requests using refresh token"""
+    data: RefreshTokenRequest,
+    db: AsyncIOMotorDatabase = Depends(deps.get_db),
+) -> AccessTokenResponse:
+    # Use findOneAndUpdate to atomically find and mark the token as used
+    token = await db.refresh_tokens.find_one_and_update(
+        {
+            "refresh_token": data.refresh_token,
+            "used": False,
+        },
+        {"$set": {"used": True}},
+        return_document=True
+    )
+
+    if token is None:
+        # Check if token exists but was already used
+        existing_token = await db.refresh_tokens.find_one(
+            {"refresh_token": data.refresh_token}
+        )
+        if existing_token and existing_token.get("used"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=api_messages.REFRESH_TOKEN_ALREADY_USED,
+            )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=api_messages.REFRESH_TOKEN_NOT_FOUND,
+        )
+    
+    if time.time() > token["exp"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=api_messages.REFRESH_TOKEN_EXPIRED,
+        )
+
+    jwt_token = create_jwt_token(user_id=str(token["user_id"]))
+
+    new_refresh_token = {
+        "user_id": token["user_id"],
+        "refresh_token": secrets.token_urlsafe(32),
+        "exp": int(time.time() + get_settings().security.refresh_token_expire_secs),
+        "used": False,
+    }
+    
+    await db.refresh_tokens.insert_one(new_refresh_token)
+
+    return AccessTokenResponse(
+        access_token=jwt_token.access_token,
+        expires_at=jwt_token.payload.exp,
+        refresh_token=new_refresh_token["refresh_token"],
+        refresh_token_expires_at=new_refresh_token["exp"],
+    )
+
+
+@router.post(
+    "/register",
+    response_model=UserResponse,
+    description="Create new user",
+    status_code=status.HTTP_201_CREATED,
+)
+async def register_new_user(
+    new_user: UserCreateRequest,
+    db: AsyncIOMotorDatabase = Depends(deps.get_db),
+) -> UserResponse:  # Changed return type annotation to UserResponse
+    # First check if email exists
+    if await db.users.find_one({"email": new_user.email}):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=api_messages.EMAIL_ADDRESS_ALREADY_USED,
+        )
+
+    user = {
+        "email": new_user.email,
+        "hashed_password": get_password_hash(new_user.password),
+    }
+
     try:
-        payload = jwt.decode(
-            input.refresh_token,
-            config.settings.SECRET_KEY,
-            algorithms=[security.JWT_ALGORITHM],
+        result = await db.users.insert_one(user)
+        # Return a UserResponse object with all required fields
+        return UserResponse(
+            user_id=str(result.inserted_id),  # Convert ObjectId to string
+            email=new_user.email
         )
-    except (jwt.DecodeError, ValidationError):
+    except DuplicateKeyError:  # In case of race condition
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail='Could not validate credentials, unknown error',
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=api_messages.EMAIL_ADDRESS_ALREADY_USED,
         )
-
-    # JWT guarantees payload will be unchanged (and thus valid), no errors here
-    token_data = security.JWTTokenPayload(**payload)
-
-    if not token_data.refresh:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail='Could not validate credentials, cannot use access token',
-        )
-    now = int(time.time())
-    if now < token_data.issued_at or now > token_data.expires_at:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail='Could not validate credentials, token expired or not yet valid',
-        )
-
-    user = await User.find_one(User.id == token_data.sub)
-
-    if user is None:
-        raise HTTPException(status_code=404, detail='User not found')
-
-    return security.generate_access_token_response(str(user.id))

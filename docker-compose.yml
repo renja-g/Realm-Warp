@@ -36,8 +36,12 @@ services:
 
   api:
     build:
-      context: .
-      dockerfile: ./api/Dockerfile
+      context: ./api
+      dockerfile: ./Dockerfile
+    env_file:
+      - .env
+    environment:
+      - ENV=PROD
     depends_on:
       - mongodb
       - rate_limiter
@@ -45,13 +49,9 @@ services:
       - "8000:8000"
     networks:
       - app-network
-    environment:
-      - RATELIMITER_HOST=ratelimiter
-      - RATELIMITER_PORT=12227
-      - DATABASE_HOSTNAME=mongodb
+
 
 networks:
-
   app-network:
     driver: bridge
 

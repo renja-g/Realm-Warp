@@ -1,48 +1,40 @@
-import time
-from collections.abc import AsyncGenerator
-
-import jwt
-from db_models.models import User
+from typing import Annotated
+from bson import ObjectId
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from pulsefire.clients import RiotAPIClient
+from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from app.core import config, security
-from app.core.pulsfire_session import riot_client
-
-reusable_oauth2 = OAuth2PasswordBearer(tokenUrl='auth/access-token')
-
-
-async def get_riot_client() -> AsyncGenerator[RiotAPIClient, None]:
-    async with riot_client as client:
-        yield client
+from app.api import api_messages
+from app.core.database_session import get_database
+from app.core.security.jwt import verify_jwt_token
 
 
-async def get_current_user(token: str = Depends(reusable_oauth2)) -> User:
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/access-token")
+
+
+def get_db() -> AsyncIOMotorDatabase:
+    return get_database()
+
+
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: AsyncIOMotorDatabase = Depends(get_db),
+) -> dict:
+    token_payload = verify_jwt_token(token)
+    
     try:
-        payload = jwt.decode(token, config.settings.SECRET_KEY, algorithms=[security.JWT_ALGORITHM])
-    except jwt.DecodeError:
+        user_id = ObjectId(token_payload.sub)
+    except Exception:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail='Could not validate credentials.',
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=api_messages.JWT_ERROR_INVALID_FORMAT,
         )
-    # JWT guarantees payload will be unchanged (and thus valid), no errors here
-    token_data = security.JWTTokenPayload(**payload)
-
-    if token_data.refresh:
+    
+    user = await db.users.find_one({"_id": user_id})
+    
+    if user is None:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail='Could not validate credentials, cannot use refresh token',
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=api_messages.JWT_ERROR_USER_REMOVED,
         )
-    now = int(time.time())
-    if now < token_data.issued_at or now > token_data.expires_at:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail='Could not validate credentials, token expired or not yet valid',
-        )
-
-    user = await User.get(token_data.sub)
-
-    if not user:
-        raise HTTPException(status_code=404, detail='User not found.')
     return user

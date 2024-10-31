@@ -24,20 +24,23 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 ENV = os.getenv("ENV")
-MONGO_INITDB_ROOT_USERNAME = os.getenv("MONGO_INITDB_ROOT_USERNAME")
-MONGO_INITDB_ROOT_PASSWORD = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
-MONGO_PORT = os.getenv("MONGO_PORT")
-MONGO_HOST = os.getenv("MONGO_HOST")
-RIOT_API_KEY = os.getenv("RIOT_API_KEY")
-RATE_LIMITER_HOST = os.getenv("RATE_LIMITER_HOST")
-RATE_LIMITER_PORT = os.getenv("RATE_LIMITER_PORT")
+
+MONGODB__PORT = os.getenv("MONGODB__PORT")
+MONGODB__HOST = os.getenv("MONGODB__HOST")
+MONGODB__USERNAME = os.getenv("MONGODB__USERNAME")
+MONGODB__PASSWORD = os.getenv("MONGODB__PASSWORD")
+
+RIOT__API_KEY = os.getenv("RIOT__API_KEY")
+RIOT__RATE_LIMITER_HOST = os.getenv("RIOT__RATE_LIMITER_HOST")
+RIOT__RATE_LIMITER_PORT = os.getenv("RIOT__RATE_LIMITER_PORT")
+
 if ENV == "DEV":
-    MONGO_HOST = "localhost"
-    RATE_LIMITER_HOST = "localhost"
+    MONGODB__HOST = "localhost"
+    RIOT__RATE_LIMITER_HOST = "localhost"
 
 
 client: AsyncIOMotorClient = AsyncIOMotorClient(
-    f"mongodb://{MONGO_INITDB_ROOT_USERNAME}:{MONGO_INITDB_ROOT_PASSWORD}@{MONGO_HOST}:{MONGO_PORT}"
+    f"mongodb://{MONGODB__USERNAME}:{MONGODB__PASSWORD}@{MONGODB__HOST}:{MONGODB__PORT}"
 )
 db: AsyncIOMotorDatabase = client["realm_warp"]
 summoners_col: AsyncIOMotorCollection = db["summoners"]
@@ -251,13 +254,13 @@ async def update_summoner_matches(client: RiotAPIClient, summoner):
 
 async def main():
     async with RiotAPIClient(
-        default_headers={'X-Riot-Token': RIOT_API_KEY},
+        default_headers={'X-Riot-Token': RIOT__API_KEY},
         middlewares=[
             json_response_middleware(orjson.loads),
             http_error_middleware(3),
             rate_limiter_middleware(
                 RiotAPIRateLimiter(
-                    proxy=f'http://{RATE_LIMITER_HOST}:{RATE_LIMITER_PORT}'
+                    proxy=f'http://{RIOT__RATE_LIMITER_HOST}:{RIOT__RATE_LIMITER_PORT}'
                 )
             ),
         ],
