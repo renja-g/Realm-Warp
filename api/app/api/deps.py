@@ -1,11 +1,13 @@
-from typing import Annotated
+from typing import Annotated, AsyncGenerator
 from bson import ObjectId
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from pulsefire.clients import RiotAPIClient
 
 from app.api import api_messages
 from app.core.database_session import get_database
+from app.core.riot_client import get_riot_api_client
 from app.core.security.jwt import verify_jwt_token
 
 
@@ -14,6 +16,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/access-token")
 
 def get_db() -> AsyncIOMotorDatabase:
     return get_database()
+
+
+async def get_riot_client() -> AsyncGenerator[RiotAPIClient, None]:
+    async with get_riot_api_client() as client:
+        yield client
 
 
 async def get_current_user(

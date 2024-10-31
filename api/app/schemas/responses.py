@@ -16,3 +16,15 @@ class AccessTokenResponse(BaseResponse):
 class UserResponse(BaseResponse):
     user_id: str
     email: EmailStr
+
+
+class SummonerResponse(BaseModel):
+    gameName: str
+    tagLine: str
+    platform: str
+    puuid: str
+    summonerId: str
+    accountId: str
+    profileIconId: int
+    summonerLevel: int
+    revisionDate: int
