@@ -44,13 +44,6 @@ class MongoDB(BaseModel):
         Constructs the MongoDB connection URI.
         Format: mongodb://username:password@host:port/database?authSource=admin
         """
-        print(
-            f"mongodb://{self.username}:"
-            f"{self.password.get_secret_value()}@"
-            f"{self.host}:{self.port}/"
-            f"{self.database}?"
-            f"authSource={self.auth_source}"
-        )
         return (
             f"mongodb://{self.username}:"
             f"{self.password.get_secret_value()}@"
@@ -62,6 +55,8 @@ class MongoDB(BaseModel):
 
 class Riot(BaseModel):
     api_key: SecretStr
+    rate_limiter_host: str
+    rate_limiter_port: int
 
 class Settings(BaseSettings):
     env: Literal["DEV", "PROD"] = "DEV"
@@ -83,6 +78,7 @@ def get_settings() -> Settings:
     if settings.env == "DEV":
         # Override MongoDB settings for development
         settings.mongodb.host = "localhost"
+        settings.riot.rate_limiter_host = "localhost"
 
         # Add development CORS origins if not already present
         dev_origins = [

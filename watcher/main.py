@@ -221,6 +221,7 @@ async def update_summoner_matches(client: RiotAPIClient, summoner):
             {"$set": match_data},
             upsert=True,
         )
+        return False
 
     # Get the summoner's leagues
     leagues = await get_leagues_from_api(client, summoner)
@@ -272,7 +273,8 @@ async def main():
                 logger.info(f"Checking summoner {api_summoner['gameName']}#{api_summoner['tagLine']}")
                 if await update_summoner_profile(api_summoner):
                     logger.info(f"Updated summoner {api_summoner['gameName']}#{api_summoner['tagLine']}")
-                await update_summoner_matches(client, api_summoner)
+                if await update_summoner_matches(client, api_summoner):
+                    logger.info(f"Updated matches for summoner {api_summoner['gameName']}#{api_summoner['tagLine']}")
             await asyncio.sleep(10)
 
 
