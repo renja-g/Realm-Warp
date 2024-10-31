@@ -12,8 +12,8 @@ services:
     env_file:
       - .env
 
-  ratelimiter:
-    build: ./services/ratelimiter
+  rate_limiter:
+    build: ./rate_limiter
     ports:
       - "12227:12227"
     networks:
@@ -21,36 +21,37 @@ services:
 
   watcher:
     build:
-      context: .
-      dockerfile: ./services/watcher/Dockerfile
+      context: ./watcher
+      dockerfile: ./Dockerfile
+    env_file:
+      - .env
+    environment:
+      - ENV=PROD
     depends_on:
       - mongodb
-      - ratelimiter
+      - rate_limiter
     networks:
       - app-network
-    environment:
-      - RATELIMITER_HOST=ratelimiter
-      - RATELIMITER_PORT=12227
-      - MONGO_HOST=mongodb
+
 
   api:
     build:
-      context: .
-      dockerfile: ./services/api/Dockerfile
+      context: ./api
+      dockerfile: ./Dockerfile
+    env_file:
+      - .env
+    environment:
+      - ENV=PROD
     depends_on:
       - mongodb
-      - ratelimiter
+      - rate_limiter
     ports:
       - "8000:8000"
     networks:
       - app-network
-    environment:
-      - RATELIMITER_HOST=ratelimiter
-      - RATELIMITER_PORT=12227
-      - DATABASE_HOSTNAME=mongodb
+
 
 networks:
-
   app-network:
     driver: bridge
 
