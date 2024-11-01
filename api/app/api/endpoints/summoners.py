@@ -39,6 +39,7 @@ async def add_summoner(
     request: AddSummonerRequest,
     db: AsyncIOMotorDatabase = Depends(deps.get_db),
     riot_client: RiotAPIClient = Depends(deps.get_riot_client),
+    current_user: dict = Depends(deps.get_current_user),
 ) -> SummonerResponse:
     # Check if summoner already exists
     existing_summoner = await db.summoners.find_one(
