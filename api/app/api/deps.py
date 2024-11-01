@@ -6,7 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from pulsefire.clients import RiotAPIClient
 
 from app.api import api_messages
-from app.core.database_session import get_database
+from app.core.database import get_database
 from app.core.riot_client import get_riot_api_client
 from app.core.security.jwt import verify_jwt_token
 

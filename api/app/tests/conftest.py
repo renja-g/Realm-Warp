@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
 )
 
-from app.core import database_session
+from api.app.core import database
 from app.core.config import get_settings
 from app.core.security.jwt import create_jwt_token
 from app.core.security.password import get_password_hash
@@ -43,7 +43,7 @@ async def fixture_setup_new_test_database() -> None:
     test_db_name = f"test_db_{worker_name}"
 
     # create new test db using connection to current database
-    conn = await database_session._ASYNC_ENGINE.connect()
+    conn = await database._ASYNC_ENGINE.connect()
     await conn.execution_options(isolation_level="AUTOCOMMIT")
     await conn.execute(sqlalchemy.text(f"DROP DATABASE IF EXISTS {test_db_name}"))
     await conn.execute(sqlalchemy.text(f"CREATE DATABASE {test_db_name}"))
@@ -57,15 +57,15 @@ async def fixture_setup_new_test_database() -> None:
     get_settings.cache_clear()
 
     # monkeypatch test database engine
-    engine = database_session.new_async_engine(get_settings().sqlalchemy_database_uri)
+    engine = database.new_async_engine(get_settings().sqlalchemy_database_uri)
 
     session_mpatch.setattr(
-        database_session,
+        database,
         "_ASYNC_ENGINE",
         engine,
     )
     session_mpatch.setattr(
-        database_session,
+        database,
         "_ASYNC_SESSIONMAKER",
         async_sessionmaker(engine, expire_on_commit=False),
     )
@@ -94,13 +94,13 @@ async def fixture_session_with_rollback(
     # we want to monkeypatch get_async_session with one bound to session
     # that we will always rollback on function scope
 
-    connection = await database_session._ASYNC_ENGINE.connect()
+    connection = await database._ASYNC_ENGINE.connect()
     transaction = await connection.begin()
 
     session = AsyncSession(bind=connection, expire_on_commit=False)
 
     monkeypatch.setattr(
-        database_session,
+        database,
         "get_async_session",
         lambda: session,
     )
