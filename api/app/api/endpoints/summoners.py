@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pulsefire.clients import RiotAPIClient
-from pydantic import BaseModel
-from app.schemas.requests import AddSummonerRequest
-from app.schemas.responses import SummonerResponse
 
 from app.api import deps
+from app.schemas.requests import AddSummonerRequest
+from app.schemas.responses import SummonerResponse
 
 router = APIRouter()
 
@@ -46,11 +45,11 @@ async def add_summoner(
         {
             "gameName": request.game_name,
             "tagLine": request.tag_line,
-            "platform": request.platform.lower()
+            "platform": request.platform.lower(),
         },
-        collation={"locale": "en", "strength": 2}
+        collation={"locale": "en", "strength": 2},
     )
-    
+
     if existing_summoner:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -62,13 +61,12 @@ async def add_summoner(
         account = await riot_client.get_account_v1_by_riot_id(
             region=PLATFORM_TO_REGION[request.platform.lower()],
             game_name=request.game_name,
-            tag_line=request.tag_line
+            tag_line=request.tag_line,
         )
 
         # Get summoner info
         summoner = await riot_client.get_lol_summoner_v4_by_puuid(
-            region=request.platform.lower(),
-            puuid=account["puuid"]
+            region=request.platform.lower(), puuid=account["puuid"]
         )
 
         # Merge account and summoner info
@@ -76,18 +74,13 @@ async def add_summoner(
             "gameName": account["gameName"],
             "tagLine": account["tagLine"],
             "platform": request.platform.lower(),
-            **summoner
+            **summoner,
         }
         new_summoner["summonerId"] = new_summoner.pop("id")
 
         await db.summoners.insert_one(new_summoner)
 
-        return SummonerResponse(
-            **new_summoner
-        )
+        return SummonerResponse(**new_summoner)
 
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

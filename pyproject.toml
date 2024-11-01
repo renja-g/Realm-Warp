@@ -1,0 +1,21 @@
+[project]
+name = "realm-warp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv]
+dev-dependencies = [
+    "pre-commit>=4.0.1",
+    "ruff>=0.7.2",
+]
+
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+# pycodestyle, pyflakes, isort, pylint, pyupgrade
+ignore = ["PLW0603", "E501"]
+select = ["E", "F", "I", "PL", "UP", "W"]

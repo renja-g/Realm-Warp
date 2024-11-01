@@ -16,7 +16,7 @@ async def read_current_user(
     # Transform MongoDB document to match UserResponse schema
     return {
         "user_id": str(current_user["_id"]),  # Convert ObjectId to string
-        "email": current_user["email"]
+        "email": current_user["email"],
         # Add any other fields that are in your UserResponse model
     }
 
@@ -48,10 +48,9 @@ async def reset_current_user_password(
 ) -> None:
     await db.users.update_one(
         {"_id": current_user["_id"]},
-        {"$set": {"hashed_password": get_password_hash(user_update_password.password)}}
+        {"$set": {"hashed_password": get_password_hash(user_update_password.password)}},
     )
     # invalidate all refresh tokens for this user when password is changed
     await db.refresh_tokens.update_many(
-        {"user_id": current_user["_id"], "used": False},
-        {"$set": {"used": True}}
+        {"user_id": current_user["_id"], "used": False}, {"$set": {"used": True}}
     )

@@ -1,22 +1,22 @@
 import asyncio
-import os
 import logging
+import os
 
+import orjson
 from dotenv import load_dotenv
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
-    AsyncIOMotorDatabase,
     AsyncIOMotorCollection,
+    AsyncIOMotorDatabase,
 )
 from pulsefire.clients import RiotAPIClient
-from pulsefire.schemas import RiotAPISchema
-from pulsefire.ratelimiters import RiotAPIRateLimiter
 from pulsefire.middlewares import (
     http_error_middleware,
     json_response_middleware,
     rate_limiter_middleware,
 )
-import orjson
+from pulsefire.ratelimiters import RiotAPIRateLimiter
+from pulsefire.schemas import RiotAPISchema
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -237,11 +237,11 @@ async def update_summoner_matches(client: RiotAPIClient, summoner):
         if participant["puuid"] == summoner["puuid"]:
             queue_type = QUEUE_ID_TO_QUEUE_TYPE[match_data["info"]["queueId"]]
             league_info = leagues.get(queue_type, {})
-            
+
             participant["league"] = {
                 "leaguePoints": league_info.get("leaguePoints", None),
                 "tier": league_info.get("tier", None),
-                "rank": league_info.get("rank", None)
+                "rank": league_info.get("rank", None),
             }
             break
 
@@ -255,13 +255,13 @@ async def update_summoner_matches(client: RiotAPIClient, summoner):
 
 async def main():
     async with RiotAPIClient(
-        default_headers={'X-Riot-Token': RIOT__API_KEY},
+        default_headers={"X-Riot-Token": RIOT__API_KEY},
         middlewares=[
             json_response_middleware(orjson.loads),
             http_error_middleware(3),
             rate_limiter_middleware(
                 RiotAPIRateLimiter(
-                    proxy=f'http://{RIOT__RATE_LIMITER_HOST}:{RIOT__RATE_LIMITER_PORT}'
+                    proxy=f"http://{RIOT__RATE_LIMITER_HOST}:{RIOT__RATE_LIMITER_PORT}"
                 )
             ),
         ],
@@ -270,11 +270,17 @@ async def main():
             summoners = await get_summoners_from_db()
             for db_summoner in summoners:
                 api_summoner = await get_summoner_from_api(client, db_summoner)
-                logger.info(f"Checking summoner {api_summoner['gameName']}#{api_summoner['tagLine']}")
+                logger.info(
+                    f"Checking summoner {api_summoner['gameName']}#{api_summoner['tagLine']}"
+                )
                 if await update_summoner_profile(api_summoner):
-                    logger.info(f"Updated summoner {api_summoner['gameName']}#{api_summoner['tagLine']}")
+                    logger.info(
+                        f"Updated summoner {api_summoner['gameName']}#{api_summoner['tagLine']}"
+                    )
                 if await update_summoner_matches(client, api_summoner):
-                    logger.info(f"Updated matches for summoner {api_summoner['gameName']}#{api_summoner['tagLine']}")
+                    logger.info(
+                        f"Updated matches for summoner {api_summoner['gameName']}#{api_summoner['tagLine']}"
+                    )
             await asyncio.sleep(10)
 
 
