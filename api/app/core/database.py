@@ -56,7 +56,7 @@ async def init_db() -> None:
             {"email": settings.security.root_username},
             {"$setOnInsert": {
                 "email": settings.security.root_username,
-                "password": get_password_hash(settings.security.root_password.get_secret_value()),
+                "hashed_password": get_password_hash(settings.security.root_password.get_secret_value()),
             }},
             upsert=True
         )
