@@ -173,8 +173,14 @@ async def refresh_token(
 async def register_new_user(
     new_user: UserCreateRequest,
     db: AsyncIOMotorDatabase = Depends(deps.get_db),
-) -> UserResponse:  # Changed return type annotation to UserResponse
-    # First check if email exists
+    current_user=Depends(deps.get_current_user),
+) -> UserResponse:
+    if current_user["email"] != get_settings().security.root_username:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=api_messages.ADMIN_ONLY,
+        )
+
     if await db.users.find_one({"email": new_user.email}):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -188,9 +194,8 @@ async def register_new_user(
 
     try:
         result = await db.users.insert_one(user)
-        # Return a UserResponse object with all required fields
         return UserResponse(
-            user_id=str(result.inserted_id),  # Convert ObjectId to string
+            user_id=str(result.inserted_id),
             email=new_user.email
         )
     except DuplicateKeyError:  # In case of race condition
