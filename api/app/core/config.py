@@ -12,7 +12,7 @@
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal, Union
+from typing import Literal
 
 from pydantic import AnyHttpUrl, BaseModel, SecretStr, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -60,6 +60,7 @@ class Riot(BaseModel):
     rate_limiter_host: str
     rate_limiter_port: int
 
+
 class Settings(BaseSettings):
     env: Literal["DEV", "PROD"] = "DEV"
     security: Security
@@ -76,7 +77,7 @@ class Settings(BaseSettings):
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     settings = Settings()  # type: ignore
-    
+
     if settings.env == "DEV":
         # Override MongoDB settings for development
         settings.mongodb.host = "localhost"
@@ -86,15 +87,17 @@ def get_settings() -> Settings:
         dev_origins = [
             "*",
         ]
-        current_origins = [str(origin) for origin in settings.security.backend_cors_origins]
+        current_origins = [
+            str(origin) for origin in settings.security.backend_cors_origins
+        ]
         for origin in dev_origins:
             if origin not in current_origins:
                 settings.security.backend_cors_origins.append(origin)
-        
+
         # Add development hosts if not already present
         dev_hosts = ["localhost", "127.0.0.1", "0.0.0.0"]
         for host in dev_hosts:
             if host not in settings.security.allowed_hosts:
                 settings.security.allowed_hosts.append(host)
 
-    return settings # type: ignore
+    return settings  # type: ignore

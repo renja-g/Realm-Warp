@@ -1,4 +1,6 @@
-from typing import Annotated, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Annotated
+
 from bson import ObjectId
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -9,7 +11,6 @@ from app.api import api_messages
 from app.core.database import get_database
 from app.core.riot_client import get_riot_api_client
 from app.core.security.jwt import verify_jwt_token
-
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/access-token")
 
@@ -28,7 +29,7 @@ async def get_current_user(
     db: AsyncIOMotorDatabase = Depends(get_db),
 ) -> dict:
     token_payload = verify_jwt_token(token)
-    
+
     try:
         user_id = ObjectId(token_payload.sub)
     except Exception:
@@ -36,9 +37,9 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=api_messages.JWT_ERROR_INVALID_FORMAT,
         )
-    
+
     user = await db.users.find_one({"_id": user_id})
-    
+
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

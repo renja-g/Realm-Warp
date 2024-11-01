@@ -1,15 +1,12 @@
-from typing import Optional
-
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
-from pymongo import IndexModel, ASCENDING
+from pymongo import ASCENDING, IndexModel
 from pymongo.errors import DuplicateKeyError
 
 from app.core.config import get_settings
 from app.core.security.password import get_password_hash
 
-
-_MONGO_CLIENT: Optional[AsyncIOMotorClient] = None
-_MONGO_DB: Optional[AsyncIOMotorDatabase] = None
+_MONGO_CLIENT: AsyncIOMotorClient | None = None
+_MONGO_DB: AsyncIOMotorDatabase | None = None
 
 
 def get_mongo_client() -> AsyncIOMotorClient:
@@ -45,20 +42,22 @@ async def close_mongo_connection() -> None:
 
 async def init_db() -> None:
     db = get_database()
-    
-    await db["users"].create_indexes([
-        IndexModel([("email", ASCENDING)], unique=True)
-    ])
-    
+
+    await db["users"].create_indexes([IndexModel([("email", ASCENDING)], unique=True)])
+
     settings = get_settings()
     try:
         await db["users"].update_one(
             {"email": settings.security.root_username},
-            {"$setOnInsert": {
-                "email": settings.security.root_username,
-                "hashed_password": get_password_hash(settings.security.root_password.get_secret_value()),
-            }},
-            upsert=True
+            {
+                "$setOnInsert": {
+                    "email": settings.security.root_username,
+                    "hashed_password": get_password_hash(
+                        settings.security.root_password.get_secret_value()
+                    ),
+                }
+            },
+            upsert=True,
         )
     except DuplicateKeyError:
         # User already exists, no need to do anything

@@ -93,7 +93,7 @@ async def login_access_token(
         "exp": int(time.time() + get_settings().security.refresh_token_expire_secs),
         "used": False,
     }
-    
+
     await db.refresh_tokens.insert_one(refresh_token)
 
     return AccessTokenResponse(
@@ -121,7 +121,7 @@ async def refresh_token(
             "used": False,
         },
         {"$set": {"used": True}},
-        return_document=True
+        return_document=True,
     )
 
     if token is None:
@@ -138,7 +138,7 @@ async def refresh_token(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=api_messages.REFRESH_TOKEN_NOT_FOUND,
         )
-    
+
     if time.time() > token["exp"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -153,7 +153,7 @@ async def refresh_token(
         "exp": int(time.time() + get_settings().security.refresh_token_expire_secs),
         "used": False,
     }
-    
+
     await db.refresh_tokens.insert_one(new_refresh_token)
 
     return AccessTokenResponse(
@@ -194,10 +194,7 @@ async def register_new_user(
 
     try:
         result = await db.users.insert_one(user)
-        return UserResponse(
-            user_id=str(result.inserted_id),
-            email=new_user.email
-        )
+        return UserResponse(user_id=str(result.inserted_id), email=new_user.email)
     except DuplicateKeyError:  # In case of race condition
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
