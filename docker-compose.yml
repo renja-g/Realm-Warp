@@ -3,17 +3,22 @@ services:
   mongodb:
     image: mongo
     restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB__USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB__PASSWORD}
+
     ports:
       - 27017:27017
     networks:
       - app-network
     volumes:
       - mongodb-data:/data/db
-    env_file:
-      - .env
 
   rate_limiter:
     build: ./rate_limiter
+    restart: unless-stopped
     ports:
       - "12227:12227"
     networks:
@@ -22,7 +27,7 @@ services:
   watcher:
     build:
       context: ./watcher
-      dockerfile: ./Dockerfile
+    restart: unless-stopped
     env_file:
       - .env
     environment:
@@ -33,11 +38,10 @@ services:
     networks:
       - app-network
 
-
   api:
     build:
       context: ./api
-      dockerfile: ./Dockerfile
+    restart: unless-stopped
     env_file:
       - .env
     environment:
