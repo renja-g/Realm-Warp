@@ -84,3 +84,16 @@ async def add_summoner(
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get(
+    "",
+    response_model=list[SummonerResponse],
+    description="Get a list of all tracked summoners",
+)
+async def get_all_summoners(
+    db: AsyncIOMotorDatabase = Depends(deps.get_db),
+    current_user: dict = Depends(deps.get_current_user),
+) -> list[SummonerResponse]:
+    summoners = await db.summoners.find().to_list(length=None)
+    return [SummonerResponse(**summoner) for summoner in summoners]
