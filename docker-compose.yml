@@ -8,7 +8,6 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGODB__USERNAME}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGODB__PASSWORD}
-
     ports:
       - 27017:27017
     networks:
