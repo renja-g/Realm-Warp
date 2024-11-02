@@ -93,7 +93,6 @@ async def add_summoner(
 )
 async def get_all_summoners(
     db: AsyncIOMotorDatabase = Depends(deps.get_db),
-    current_user: dict = Depends(deps.get_current_user),
 ) -> list[SummonerResponse]:
     summoners = await db.summoners.find().to_list(length=None)
     return [SummonerResponse(**summoner) for summoner in summoners]

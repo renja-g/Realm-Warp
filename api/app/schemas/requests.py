@@ -22,6 +22,16 @@ class Platform(str, Enum):
     vn2 = "vn2"  # Vietnam
 
 
+class QueueType(str, Enum):
+    SOLO = "RANKED_SOLO_5x5"
+    FLEX = "RANKED_FLEX_SR"
+
+
+class QueueId(int, Enum):
+    SOLO = 420
+    FLEX = 440
+
+
 class BaseRequest(BaseModel):
     pass
 

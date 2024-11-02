@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app.api import api_messages
-from app.api.endpoints import auth, summoners, users
+from app.api.endpoints import auth, leaderboard, summoners, users
 
 auth_router = APIRouter()
 auth_router.include_router(auth.router, prefix="/auth", tags=["auth"])
@@ -9,7 +9,7 @@ auth_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router = APIRouter(
     responses={
         401: {
-            "description": "No `Authorization` access token header, token is invalid or user removed",  # noqa
+            "description": "No `Authorization` access token header, token is invalid or user removed",
             "content": {
                 "application/json": {
                     "examples": {
@@ -18,7 +18,7 @@ api_router = APIRouter(
                             "value": {"detail": "Not authenticated"},
                         },
                         "invalid token": {
-                            "summary": "Token validation failed, decode failed, it may be expired or malformed",  # noqa
+                            "summary": "Token validation failed, decode failed, it may be expired or malformed",
                             "value": {"detail": "Token invalid: {detailed error msg}"},
                         },
                         "removed user": {
@@ -33,3 +33,6 @@ api_router = APIRouter(
 )
 api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(summoners.router, prefix="/summoners", tags=["summoners"])
+api_router.include_router(
+    leaderboard.router, prefix="/leaderboard", tags=["leaderboard"]
+)
