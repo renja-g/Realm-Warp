@@ -1,5 +1,5 @@
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
-from pymongo import ASCENDING, IndexModel
+from pymongo import ASCENDING, DESCENDING, IndexModel
 from pymongo.errors import DuplicateKeyError
 
 from app.core.config import get_settings
@@ -43,7 +43,21 @@ async def close_mongo_connection() -> None:
 async def init_db() -> None:
     db = get_database()
 
-    await db["users"].create_indexes([IndexModel([("email", ASCENDING)], unique=True)])
+    await db["users"].create_indexes([
+        IndexModel([("email", ASCENDING)], unique=True)
+    ])
+
+    await db["league_entries"].create_indexes([
+        # Single compound index that covers both the lookup and sorting
+        IndexModel([
+            ("queueType", ASCENDING),
+            ("ref_summoner", ASCENDING),
+            ("tier", DESCENDING),
+            ("rank", DESCENDING),
+            ("leaguePoints", DESCENDING)
+        ], name="league_entries_compound_idx")
+    ])
+
 
     settings = get_settings()
     try:
