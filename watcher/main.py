@@ -125,6 +125,14 @@ async def get_summoner_from_api(client: RiotAPIClient, summoner: dict) -> dict:
     api_account = await client.get_account_v1_by_puuid(
         region=PLATFORM_TO_REGION[summoner["platform"]], puuid=summoner["puuid"]
     )
+    if api_account["puuid"] != summoner["puuid"]:
+        logger.error(
+            f"PUUID mismatch for summoner {summoner['gameName']}#{summoner['tagLine']}"
+        )
+        logger.error(f"DB PUUID: {summoner['puuid']}")
+        logger.error(f"API PUUID: {api_account['puuid']}")
+        logger.error(f"API Response: {api_account}")
+        return summoner
     api_summoner = await client.get_lol_summoner_v4_by_puuid(
         region=summoner["platform"], puuid=summoner["puuid"]
     )
