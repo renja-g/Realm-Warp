@@ -18,7 +18,11 @@ from pulsefire.middlewares import (
 from pulsefire.ratelimiters import RiotAPIRateLimiter
 from pulsefire.schemas import RiotAPISchema
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 logger = logging.getLogger(__name__)
 
 load_dotenv()
@@ -279,15 +283,15 @@ async def main():
             for db_summoner in summoners:
                 api_summoner = await get_summoner_from_api(client, db_summoner)
                 logger.info(
-                    f"Checking summoner {api_summoner['gameName']}#{api_summoner['tagLine']}"
+                    f"[{api_summoner['platform']}] Checking summoner {api_summoner['gameName']}#{api_summoner['tagLine']}"
                 )
                 if await update_summoner_profile(api_summoner):
                     logger.info(
-                        f"Updated summoner {api_summoner['gameName']}#{api_summoner['tagLine']}"
+                        f"[{api_summoner['platform']}] Profile updated for {api_summoner['gameName']}#{api_summoner['tagLine']}"
                     )
                 if await update_summoner_matches(client, api_summoner):
                     logger.info(
-                        f"Updated matches for summoner {api_summoner['gameName']}#{api_summoner['tagLine']}"
+                        f"[{api_summoner['platform']}] Matches updated for {api_summoner['gameName']}#{api_summoner['tagLine']}"
                     )
             await asyncio.sleep(10)
 
