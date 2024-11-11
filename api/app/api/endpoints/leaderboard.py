@@ -2,10 +2,11 @@ from fastapi import APIRouter, Depends
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from app.api import deps
-from app.schemas.requests import QueueType
 from app.core.utils import serialize_mongo_doc
+from app.schemas.requests import QueueType
 
 router = APIRouter()
+
 
 @router.get(
     "",
