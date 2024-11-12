@@ -17,6 +17,11 @@ async def get_leaderboard(
     queue_type: QueueType,
     db: AsyncIOMotorDatabase = Depends(deps.get_db),
 ) -> list[dict]:
+    if queue_type == QueueType.SOLO:
+        queue_id = 420
+    elif queue_type == QueueType.FLEX:
+        queue_id = 440
+
     pipeline = [
         {
             "$lookup": {
@@ -78,6 +83,7 @@ async def get_leaderboard(
         {"$sort": {"tierScore": -1, "rankScore": -1, "league.leaguePoints": -1}},
         {
             "$project": {
+                "_id": 1,
                 "summoner": {
                     "$mergeObjects": [
                         {
@@ -89,22 +95,94 @@ async def get_leaderboard(
                                             {"$ne": ["$$this.k", "tierScore"]},
                                             {"$ne": ["$$this.k", "rankScore"]},
                                             {"$ne": ["$$this.k", "league"]},
+                                            {"$ne": ["$$this.k", "matches"]},
                                         ]
                                     },
                                 }
                             }
-                        },
-                        {"_id": {"$toString": "$_id"}},
+                        }
                     ]
                 },
-                "league": {
-                    "$mergeObjects": [
-                        "$league",
-                        {
-                            "_id": {"$toString": "$league._id"},
-                            "ref_summoner": {"$toString": "$league.ref_summoner"},
+                "league": "$league",
+            }
+        },
+        {
+            "$lookup": {
+                "from": "matches",
+                "foreignField": "ref_summoners",
+                "localField": "_id",
+                "let": {"summoner_puuid": "$summoner.puuid"},
+                "pipeline": [
+                    {"$match": {"info.queueId": queue_id}},
+                    {
+                        "$project": {
+                            "_id": 0,
+                            "metadata.matchId": 1,
+                            "info.gameEndTimestamp": 1,
+                            "participant": {
+                                "$let": {
+                                    "vars": {
+                                        "participant": {
+                                            "$arrayElemAt": [
+                                                {
+                                                    "$filter": {
+                                                        "input": "$info.participants",
+                                                        "cond": {
+                                                            "$eq": [
+                                                                "$$this.puuid",
+                                                                "$$summoner_puuid",
+                                                            ]
+                                                        },
+                                                    }
+                                                },
+                                                0,
+                                            ]
+                                        }
+                                    },
+                                    "in": {
+                                        "championName": "$$participant.championName",
+                                        "win": "$$participant.win",
+                                        "kills": "$$participant.kills",
+                                        "deaths": "$$participant.deaths",
+                                        "assists": "$$participant.assists",
+                                        "teamPosition": "$$participant.teamPosition",
+                                        "individualPosition": "$$participant.individualPosition",
+                                        "league": {
+                                            "leaguePoints": "$$participant.league.leaguePoints",
+                                            "tier": "$$participant.league.tier",
+                                            "rank": "$$participant.league.rank",
+                                        },
+                                    },
+                                }
+                            },
+                        }
+                    },
+                ],
+                "as": "matches",
+            }
+        },
+        {
+            "$project": {
+                "_id": 1,
+                "summoner": 1,
+                "league": 1,
+                "matches": {
+                    "$map": {
+                        "input": "$matches",
+                        "as": "match",
+                        "in": {
+                            "matchId": "$$match.metadata.matchId",
+                            "gameEndTimestamp": "$$match.info.gameEndTimestamp",
+                            "championName": "$$match.participant.championName",
+                            "win": "$$match.participant.win",
+                            "kills": "$$match.participant.kills",
+                            "deaths": "$$match.participant.deaths",
+                            "assists": "$$match.participant.assists",
+                            "teamPosition": "$$match.participant.teamPosition",
+                            "individualPosition": "$$match.participant.individualPosition",
+                            "league": "$$match.participant.league",
                         },
-                    ]
+                    }
                 },
             }
         },
@@ -112,3 +190,5 @@ async def get_leaderboard(
 
     result = await db.summoners.aggregate(pipeline).to_list(length=None)
     return serialize_mongo_doc(result)
+
+
