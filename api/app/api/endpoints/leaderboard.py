@@ -114,6 +114,8 @@ async def get_leaderboard(
                 "let": {"summoner_puuid": "$summoner.puuid"},
                 "pipeline": [
                     {"$match": {"info.queueId": queue_id}},
+                    {"$sort": {"info.gameEndTimestamp": -1}},
+                    {"$limit": 20},
                     {
                         "$project": {
                             "_id": 0,
@@ -190,5 +192,3 @@ async def get_leaderboard(
 
     result = await db.summoners.aggregate(pipeline).to_list(length=None)
     return serialize_mongo_doc(result)
-
-
