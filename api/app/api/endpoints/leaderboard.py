@@ -142,7 +142,7 @@ async def get_leaderboard(
                                         }
                                     },
                                     "in": {
-                                        "championName": "$$participant.championName",
+                                        "championId": "$$participant.championId",
                                         "win": "$$participant.win",
                                         "kills": "$$participant.kills",
                                         "deaths": "$$participant.deaths",
@@ -175,7 +175,7 @@ async def get_leaderboard(
                         "in": {
                             "matchId": "$$match.metadata.matchId",
                             "gameEndTimestamp": "$$match.info.gameEndTimestamp",
-                            "championName": "$$match.participant.championName",
+                            "championId": "$$match.participant.championId",
                             "win": "$$match.participant.win",
                             "kills": "$$match.participant.kills",
                             "deaths": "$$match.participant.deaths",
