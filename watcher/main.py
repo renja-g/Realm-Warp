@@ -3,6 +3,7 @@ import logging
 import os
 
 import orjson
+import sentry_sdk
 from dotenv import load_dotenv
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
@@ -37,6 +38,19 @@ MONGODB__PASSWORD = os.getenv("MONGODB__PASSWORD")
 RIOT__API_KEY = os.getenv("RIOT__API_KEY")
 RIOT__RATE_LIMITER_HOST = os.getenv("RIOT__RATE_LIMITER_HOST")
 RIOT__RATE_LIMITER_PORT = os.getenv("RIOT__RATE_LIMITER_PORT")
+
+SENTRY__DSN = os.getenv("SENTRY__DSN")
+
+# Initialize Sentry if DSN is provided
+if SENTRY__DSN:
+    sentry_sdk.init(
+        dsn=SENTRY__DSN,
+        send_default_pii=True,
+        traces_sample_rate=1.0,
+    )
+    logger.info("Sentry initialized")
+else:
+    logger.warning("Sentry DSN not provided, error tracking disabled")
 
 if ENV == "DEV":
     MONGODB__HOST = "localhost"

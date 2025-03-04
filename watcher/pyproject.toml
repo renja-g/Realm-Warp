@@ -8,4 +8,5 @@ dependencies = [
     "orjson>=3.10.10",
     "pulsefire>=2.0.13",
     "python-dotenv>=1.0.1",
+    "sentry-sdk>=2.22.0",
 ]
