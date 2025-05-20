@@ -121,6 +121,7 @@ async def get_leaderboard(
                             "_id": 0,
                             "metadata.matchId": 1,
                             "info.gameEndTimestamp": 1,
+                            "info.gameDuration": 1,
                             "participant": {
                                 "$let": {
                                     "vars": {
@@ -149,6 +150,7 @@ async def get_leaderboard(
                                         "assists": "$$participant.assists",
                                         "teamPosition": "$$participant.teamPosition",
                                         "individualPosition": "$$participant.individualPosition",
+                                        "gameEndedInEarlySurrender": "$$participant.gameEndedInEarlySurrender",
                                         "league": {
                                             "leaguePoints": "$$participant.league.leaguePoints",
                                             "tier": "$$participant.league.tier",
@@ -175,6 +177,17 @@ async def get_leaderboard(
                         "in": {
                             "matchId": "$$match.metadata.matchId",
                             "gameEndTimestamp": "$$match.info.gameEndTimestamp",
+                            "remake": {
+                                "$and": [
+                                    {"$lt": ["$$match.info.gameDuration", "300"]},
+                                    {
+                                        "$eq": [
+                                            "$$match.participant.gameEndedInEarlySurrender",
+                                            True,
+                                        ]
+                                    },
+                                ]
+                            },
                             "championId": "$$match.participant.championId",
                             "win": "$$match.participant.win",
                             "kills": "$$match.participant.kills",
