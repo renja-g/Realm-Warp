@@ -75,6 +75,7 @@ async def add_summoner(
             "tagLine": account["tagLine"],
             "platform": request.platform.lower(),
             **summoner,
+            "initial_rank_fetched": False,
         }
         new_summoner["summonerId"] = new_summoner.pop("id")
 

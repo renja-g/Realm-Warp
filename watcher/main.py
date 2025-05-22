@@ -218,7 +218,7 @@ async def update_summoner_matches(client: RiotAPIClient, summoner):
     last_api_match_id = await client.get_lol_match_v5_match_ids_by_puuid(
         region=PLATFORM_TO_REGION[summoner["platform"]],
         puuid=summoner["puuid"],
-        queries={"start": 0, "count": 1, "type": "ranked"},
+        queries={"start": 0, "count": 1},
     )
     last_db_match = await matches_col.find_one(
         {"ref_summoners": {"$elemMatch": {"$eq": summoner["_id"]}}},
@@ -301,6 +301,20 @@ async def main():
                 logger.info(
                     f"[{api_summoner['platform']}] Checking summoner {api_summoner['gameName']}#{api_summoner['tagLine']}"
                 )
+
+                # Fetch initial rank if not already fetched
+                initial_rank_fetched = db_summoner.get("initial_rank_fetched", False)
+                if not initial_rank_fetched:
+                    leagues = await get_leagues_from_api(client, api_summoner)
+                    await update_summoner_leagues(api_summoner, leagues)
+                    logger.info(
+                        f"[{api_summoner['platform']}] Initial rank fetched for {api_summoner['gameName']}#{api_summoner['tagLine']}"
+                    )
+                    await summoners_col.update_one(
+                        {"_id": api_summoner["_id"]},
+                        {"$set": {"initial_rank_fetched": True}},
+                    )
+
                 if await update_summoner_profile(api_summoner):
                     logger.info(
                         f"[{api_summoner['platform']}] Profile updated for {api_summoner['gameName']}#{api_summoner['tagLine']}"
