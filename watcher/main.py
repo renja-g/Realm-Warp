@@ -218,7 +218,7 @@ async def update_summoner_matches(client: RiotAPIClient, summoner):
     last_api_match_id = await client.get_lol_match_v5_match_ids_by_puuid(
         region=PLATFORM_TO_REGION[summoner["platform"]],
         puuid=summoner["puuid"],
-        queries={"start": 0, "count": 1},
+        queries={"start": 0, "count": 1, "type": "ranked"},
     )
     last_db_match = await matches_col.find_one(
         {"ref_summoners": {"$elemMatch": {"$eq": summoner["_id"]}}},
