@@ -301,6 +301,20 @@ async def main():
                 logger.info(
                     f"[{api_summoner['platform']}] Checking summoner {api_summoner['gameName']}#{api_summoner['tagLine']}"
                 )
+
+                # Fetch initial rank if not already fetched
+                initial_rank_fetched = db_summoner.get("initial_rank_fetched", False)
+                if not initial_rank_fetched:
+                    leagues = await get_leagues_from_api(client, api_summoner)
+                    await update_summoner_leagues(api_summoner, leagues)
+                    logger.info(
+                        f"[{api_summoner['platform']}] Initial rank fetched for {api_summoner['gameName']}#{api_summoner['tagLine']}"
+                    )
+                    await summoners_col.update_one(
+                        {"_id": api_summoner["_id"]},
+                        {"$set": {"initial_rank_fetched": True}},
+                    )
+
                 if await update_summoner_profile(api_summoner):
                     logger.info(
                         f"[{api_summoner['platform']}] Profile updated for {api_summoner['gameName']}#{api_summoner['tagLine']}"
