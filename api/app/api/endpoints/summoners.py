@@ -97,3 +97,72 @@ async def get_all_summoners(
 ) -> list[SummonerResponse]:
     summoners = await db.summoners.find().to_list(length=None)
     return [SummonerResponse(**summoner) for summoner in summoners]
+
+
+@router.delete(
+    "/{summoner_puuid}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={status.HTTP_404_NOT_FOUND: {"description": "Summoner not found"}},
+    description="Delete a summoner",
+)
+async def delete_summoner(
+    summoner_puuid: str,
+    db: AsyncIOMotorDatabase = Depends(deps.get_db),
+    current_user: dict = Depends(deps.get_current_user),
+):
+    try:
+        async with await db.client.start_session() as session:
+            async with session.start_transaction():
+                # 1. Find summoner by puuid
+                summoner_doc = await db.summoners.find_one(
+                    {"puuid": summoner_puuid}, session=session
+                )
+                if not summoner_doc:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Summoner not found",
+                    )
+
+                summoner_doc_id = summoner_doc["_id"]
+
+                # 1. Delete 'orphan' match documents
+                await db.matches.delete_many(
+                    {
+                        "ref_summoners": [summoner_doc_id]
+                    },
+                    session=session,
+                )
+
+                # 2. Update 'shared' match documents: Pull summoner's ID from ref_summoners array
+                await db.matches.update_many(
+                    {
+                        "ref_summoners": summoner_doc_id
+                    },
+                    {"$pull": {"ref_summoners": summoner_doc_id}},
+                    session=session,
+                )
+
+                # 3. Update 'shared' match documents: Unset the league field from the participant's data
+                await db.matches.update_many(
+                    {
+                        "info.participants.puuid": summoner_puuid
+                    },
+                    {"$unset": {"info.participants.$.league": ""}},
+                    session=session,
+                )
+
+                # Delete Summoner Document
+                await db.summoners.delete_one({"_id": summoner_doc_id}, session=session)
+
+                # Delete League Entries
+                await db.league_entries.delete_many(
+                    {"ref_summoner": summoner_doc_id}, session=session
+                )
+
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred during the transaction: {e}",
+        )
