@@ -119,10 +119,11 @@ async def update_summoner_profile(summoner) -> bool:
     )
 
     if not existing_summoner:
-        # If the summoner doesn't exist in the database, insert it
-        await summoners_col.insert_one(summoner)
-        return True
-
+        # If the summoner doesn't exist in the database, log an informational message and return False
+        logger.info(
+            f"Summoner with _id {summoner['_id']} (Name: {summoner.get('gameName', 'N/A')}#{summoner.get('tagLine', 'N/A')}) was not found. It might have been deleted during the watcher cycle. Skipping re-addition."
+        )
+        return False
     # Check if any fields have changed
     has_changed = any(
         existing_summoner.get(key) != value for key, value in summoner.items()
