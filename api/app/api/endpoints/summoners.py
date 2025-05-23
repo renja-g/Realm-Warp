@@ -107,6 +107,7 @@ async def get_all_summoners(
 async def delete_summoner(
     summoner_puuid: str,
     db: AsyncIOMotorDatabase = Depends(deps.get_db),
+    current_user: dict = Depends(deps.get_current_user),
 ):
     try:
         async with await db.client.start_session() as session:
