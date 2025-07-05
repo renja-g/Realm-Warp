@@ -23,7 +23,6 @@ class SummonerResponse(BaseModel):
     tagLine: str
     platform: str
     puuid: str
-    accountId: str
     profileIconId: int
     summonerLevel: int
     revisionDate: int
