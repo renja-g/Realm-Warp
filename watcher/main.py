@@ -190,7 +190,7 @@ async def get_leagues_from_api(
 ) -> list[RiotAPISchema.LolLeagueV4LeagueFullEntry]:
     """Get the summoner's leagues from the API."""
     leagues = await client.get_lol_league_v4_entries_by_puuid(
-        region=summoner["platform"], summoner_id=summoner["puuid"]
+        region=summoner["platform"], puuid=summoner["puuid"]
     )
     return leagues
 
