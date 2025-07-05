@@ -6,7 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "motor>=3.6.0",
     "orjson>=3.10.10",
-    "pulsefire>=2.0.13",
+    "pulsefire>=2.0.28",
     "python-dotenv>=1.0.1",
     "sentry-sdk>=2.22.0",
 ]
