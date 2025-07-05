@@ -4,5 +4,5 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.12"
 dependencies = [
-    "pulsefire>=2.0.20",
+    "pulsefire>=2.0.28",
 ]
