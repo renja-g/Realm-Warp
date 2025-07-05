@@ -77,7 +77,6 @@ async def add_summoner(
             **summoner,
             "initial_rank_fetched": False,
         }
-        new_summoner["summonerId"] = new_summoner.pop("id")
 
         await db.summoners.insert_one(new_summoner)
 

@@ -156,7 +156,6 @@ async def get_summoner_from_api(client: RiotAPIClient, summoner: dict) -> dict:
         "platform": summoner["platform"],
         "_id": summoner["_id"],
     }
-    api_summoner["summonerId"] = api_summoner.pop("id")
 
     if api_summoner["puuid"] != summoner["puuid"]:
         logger.error(
@@ -190,8 +189,8 @@ async def get_leagues_from_api(
     client: RiotAPIClient, summoner: dict
 ) -> list[RiotAPISchema.LolLeagueV4LeagueFullEntry]:
     """Get the summoner's leagues from the API."""
-    leagues = await client.get_lol_league_v4_entries_by_summoner(
-        region=summoner["platform"], summoner_id=summoner["summonerId"]
+    leagues = await client.get_lol_league_v4_entries_by_puuid(
+        region=summoner["platform"], summoner_id=summoner["puuid"]
     )
     return leagues
 
